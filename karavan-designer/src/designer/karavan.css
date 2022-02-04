@@ -184,6 +184,29 @@
     background: #fafafa;
 }
 
+.karavan .top-icon {
+    height: 24px;
+}
+
+.karavan .main-tabs .top-menu-item {
+    display: flex;
+    flex-direction: row;
+}
+
+.karavan .main-tabs .pf-c-tabs__link .pf-c-tabs__item-icon {
+    height: 24px;
+    margin-right: 10px
+}
+
+.karavan .main-tabs .pf-c-tabs__item-text {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.karavan .main-tabs .pf-c-tabs__item.pf-m-current {
+    --pf-c-tabs__link--after--BorderColor: var(--pf-global--primary-color--200);
+}
+
 /*Properties*/
 .karavan .dsl-page .properties {
     border: 1px solid #eee;
@@ -327,15 +350,8 @@
 .karavan .dsl-page .properties .parameters {
     padding-top: 6px;
     padding-left: 16px;
-    grid-row-gap: 10px;
     row-gap: 6px;
     display: grid;
-    border-width: var(--pf-global--BorderWidth--sm);
-    border-top-color: transparent;
-    border-right-color: transparent;
-    border-bottom-color: var(--pf-global--BorderColor--200);
-    border-left-color: var(--pf-global--BorderColor--300);
-    border-style: solid;
 }
 
 .karavan .dsl-page .properties .expression .pf-c-form__group-label,
@@ -514,14 +530,24 @@
     visibility: visible;
 }
 
+.modal-delete {
+    width: 350px;
+}
+
 .step-element .header {
     height: 50px;
 }
 
+.step-element-selected {
+    background-color: rgb(171, 172, 224, 0.1);
+}
+
 .step-element .selected .header-icon {
-    border-color: black;
+    border-color: rgb(48, 50, 132);
+    background-color: rgb(171, 172, 224);
     border-width: 2px;
 }
+
 .step-element .header .header-text {
     position: absolute;
     top: 8px;
@@ -586,8 +612,8 @@
 }
 
 .step-element .add-element-button {
-    top: 4px;
-    left: 4px;
+    top: 5px;
+    left: 5px;
     font-size: 15px;
     height: 15px;
     line-height: 1;
