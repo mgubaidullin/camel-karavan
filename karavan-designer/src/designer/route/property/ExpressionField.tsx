@@ -23,20 +23,21 @@ import {
     SelectDirection,
     SelectOption,
 } from '@patternfly/react-core';
-import '../karavan.css';
+import '../../karavan.css';
 import "@patternfly/patternfly/patternfly.css";
 import HelpIcon from "@patternfly/react-icons/dist/js/icons/help-icon";
 import {CamelMetadataApi, Languages, PropertyMeta} from "karavan-core/lib/model/CamelMetadata";
 import {CamelDefinitionApiExt} from "karavan-core/lib/api/CamelDefinitionApiExt";
-import {CamelElement, ExpressionDefinition} from "karavan-core/lib/model/CamelDefinition";
+import {CamelElement, ExpressionDefinition, Integration} from "karavan-core/lib/model/CamelDefinition";
 import {CamelDefinitionApi} from "karavan-core/lib/api/CamelDefinitionApi";
 import {DslPropertyField} from "./DslPropertyField";
-import {CamelUi} from "../CamelUi";
+import {CamelUi} from "../../utils/CamelUi";
 
 interface Props {
     property: PropertyMeta,
     value: CamelElement,
     onExpressionChange?: ( value:ExpressionDefinition) => void
+    integration: Integration,
 }
 
 interface State {
@@ -140,6 +141,7 @@ export class ExpressionField extends React.Component<Props, State> {
                     }>
                     {value && this.getProps().map((property: PropertyMeta) =>
                         <DslPropertyField key={property.name + this.props.value?.uuid} property={property}
+                                          integration={this.props.integration}
                                           element={value}
                                           value={value ? (value as any)[property.name] : undefined}
                                           onExpressionChange={exp => {}}
