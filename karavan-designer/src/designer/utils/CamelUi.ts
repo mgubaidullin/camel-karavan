@@ -22,8 +22,8 @@ import {ComponentProperty} from "karavan-core/lib/model/ComponentModels";
 import {CamelMetadataApi} from "karavan-core/lib/model/CamelMetadata";
 import {CamelUtil} from "karavan-core/lib/api/CamelUtil";
 import {CamelDefinitionApiExt} from "karavan-core/lib/api/CamelDefinitionApiExt";
-import {CamelElement, KameletDefinition, NamedBeanDefinition, RouteDefinition} from "karavan-core/lib/model/CamelDefinition";
-import {Integration} from "karavan-core/src/core/model/CamelDefinition";
+import { KameletDefinition, NamedBeanDefinition, RouteDefinition} from "karavan-core/lib/model/CamelDefinition";
+import {CamelElement, Dependency, Integration} from "karavan-core/lib/model/IntegrationDefinition";
 
 const StepElements: string[] = [
     "AggregateDefinition",
@@ -363,8 +363,11 @@ export class CamelUi {
         const result = new Map<string, number>();
         result.set('routes', i.spec.flows?.filter((e: any) => e.dslName === 'RouteDefinition').length || 0);
         const beans = i.spec.flows?.filter((e: any) => e.dslName === 'Beans');
-        if (beans && beans.length > 0 && beans[0].beans){
+        if (beans && beans.length > 0 && beans[0].beans && beans[0].beans.length > 0){
             result.set('beans', Array.from(beans[0].beans).length);
+        }
+        if (i.spec.dependencies && i.spec.dependencies.length > 0){
+            result.set('dependencies', i.spec.dependencies.length);
         }
         return result;
     }
@@ -383,6 +386,10 @@ export class CamelUi {
             result.push(...beans[0].beans);
         }
         return result;
+    }
+
+    static getDependencies = (integration: Integration): Dependency[] => {
+        return integration.spec.dependencies || [];
     }
 
 }
