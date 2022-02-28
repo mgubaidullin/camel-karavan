@@ -29,8 +29,9 @@ import '../../karavan.css';
 import "@patternfly/patternfly/patternfly.css";
 import HelpIcon from "@patternfly/react-icons/dist/js/icons/help-icon";
 import {ComponentProperty} from "karavan-core/lib/model/ComponentModels";
-import {CamelUi} from "../../utils/CamelUi";
-import {Integration} from "karavan-core/lib/model/IntegrationDefinition";
+import {CamelUi, RouteToCreate} from "../../utils/CamelUi";
+import {CamelElement, Integration} from "karavan-core/lib/model/IntegrationDefinition";
+import {ToDefinition} from "karavan-core/lib/model/CamelDefinition";
 
 const prefix = "parameters";
 const beanPrefix = "#bean:";
@@ -38,8 +39,9 @@ const beanPrefix = "#bean:";
 interface Props {
     property: ComponentProperty,
     integration: Integration,
+    element?: CamelElement,
     value: any,
-    onParameterChange?: (parameter: string, value: string | number | boolean | any, pathParameter?: boolean) => void
+    onParameterChange?: (parameter: string, value: string | number | boolean | any, pathParameter?: boolean, newRoute?: RouteToCreate) => void
 }
 
 interface State {
@@ -52,13 +54,13 @@ export class ComponentParameterField extends React.Component<Props, State> {
         selectStatus: new Map<string, boolean>(),
     }
 
-    parametersChanged = (parameter: string, value: string | number | boolean | any, pathParameter?: boolean) => {
-        this.props.onParameterChange?.call(this, parameter, value, pathParameter);
+    parametersChanged = (parameter: string, value: string | number | boolean | any, pathParameter?: boolean, newRoute?: RouteToCreate) => {
+        this.props.onParameterChange?.call(this, parameter, value, pathParameter, newRoute);
         this.setState({selectStatus: new Map<string, boolean>([[parameter, false]])});
     }
 
-    openSelect = (propertyName: string) => {
-        this.setState({selectStatus: new Map<string, boolean>([[propertyName, true]])});
+    openSelect = (propertyName: string, isExpanded: boolean) => {
+        this.setState({selectStatus: new Map<string, boolean>([[propertyName, isExpanded]])});
     }
 
     isSelectOpen = (propertyName: string): boolean => {
@@ -77,11 +79,63 @@ export class ComponentParameterField extends React.Component<Props, State> {
                 variant={SelectVariant.single}
                 aria-label={property.name}
                 onToggle={isExpanded => {
-                    this.openSelect(property.name)
+                    this.openSelect(property.name, isExpanded)
                 }}
                 onSelect={(e, value, isPlaceholder) => this.parametersChanged(property.name, (!isPlaceholder ? value : undefined))}
                 selections={value}
                 isOpen={this.isSelectOpen(property.name)}
+                aria-labelledby={property.name}
+                direction={SelectDirection.down}
+            >
+                {selectOptions}
+            </Select>
+        )
+    }
+
+    canBeInternalUri = (property: ComponentProperty): boolean => {
+        if (this.props.element && this.props.element.dslName === 'ToDefinition' && property.name === 'name') {
+            const uri:string = (this.props.element as ToDefinition).uri || '';
+            return uri.startsWith("direct") || uri.startsWith("seda");
+        } else {
+            return false;
+        }
+    }
+
+    getInternalComponentName = (property: ComponentProperty): string => {
+        if (this.props.element && this.props.element.dslName === 'ToDefinition' && property.name === 'name') {
+            const uri:string = (this.props.element as ToDefinition).uri || '';
+            if (uri.startsWith("direct")) return "direct";
+            if (uri.startsWith("seda")) return "seda";
+            return '';
+        } else {
+            return '';
+        }
+    }
+
+    getInternalUriSelect = (property: ComponentProperty, value: any) => {
+        const selectOptions: JSX.Element[] = [];
+        const componentName = this.getInternalComponentName(property);
+        const urls = CamelUi.getInternalRouteUris(this.props.integration, componentName, false);
+        if (urls && urls.length > 0) {
+            selectOptions.push(...urls.map((value: string) =>
+                <SelectOption key={value} value={value.trim()}/>));
+        }
+        return (
+            <Select
+                placeholderText="Select or type an URI"
+                variant={SelectVariant.typeahead}
+                aria-label={property.name}
+                onToggle={isExpanded => {
+                    this.openSelect(property.name, isExpanded)
+                }}
+                onSelect={(e, value, isPlaceholder) => {
+                    const newRoute = !urls.includes(value.toString()) ? new RouteToCreate(componentName, value.toString()) : undefined;
+                    this.parametersChanged(property.name, (!isPlaceholder ? value : undefined), property.kind === 'path', newRoute);
+                }}
+                selections={value}
+                isOpen={this.isSelectOpen(property.name)}
+                isCreatable={true}
+                isInputFilterPersisted={true}
                 aria-labelledby={property.name}
                 direction={SelectDirection.down}
             >
@@ -113,7 +167,7 @@ export class ComponentParameterField extends React.Component<Props, State> {
                 variant={SelectVariant.single}
                 aria-label={property.name}
                 onToggle={isExpanded => {
-                    this.openSelect(property.name)
+                    this.openSelect(property.name, isExpanded)
                 }}
                 onSelect={(e, value, isPlaceholder) => this.parametersChanged(property.name, (!isPlaceholder ? value : undefined), property.kind === 'path')}
                 selections={value !== undefined ? value.toString() : property.defaultValue}
@@ -160,7 +214,8 @@ export class ComponentParameterField extends React.Component<Props, State> {
                         </button>
                     </Popover>
                 }>
-                {['string', 'duration', 'integer', 'int', 'number'].includes(property.type) && property.enum === undefined
+                {this.canBeInternalUri(property) && this.getInternalUriSelect(property, value)}
+                {['string', 'duration', 'integer', 'int', 'number'].includes(property.type) && property.enum === undefined && !this.canBeInternalUri(property)
                     && this.getTextInput(property, value)}
                 {['object'].includes(property.type) && !property.enum
                     && this.getSelectBean(property, value)}

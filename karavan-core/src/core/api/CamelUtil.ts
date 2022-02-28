@@ -28,7 +28,7 @@ export class CamelUtil {
         const int: Integration = new Integration({...clone});
         const flows: any[] = [];
         int.spec.dependencies = int.spec.dependencies?.map(d => this.cloneDependency(d));
-        int.spec.flows?.filter((e: any) => e.dslName === 'RouteDefinition')
+        int.spec.flows?.filter((e: any) => e.dslName !== 'Beans')
             .forEach(f => flows.push(CamelDefinitionApi.createStep(f.dslName, f)));
         int.spec.flows?.filter((e: any) => e.dslName === 'Beans')
             .forEach(beans => {
@@ -57,26 +57,6 @@ export class CamelUtil {
         const newBean = new NamedBeanDefinition(clone);
         newBean.uuid = bean.uuid;
         return newBean;
-    }
-
-    static replacer = (key:string, value:any): any => {
-        if (typeof value == 'object' && (value.hasOwnProperty('stepName') || value.hasOwnProperty('step-name'))) {
-            const stepNameField = value.hasOwnProperty('stepName') ? 'stepName' : 'step-name';
-            const stepName = value[stepNameField];
-            const x = JSON.parse(JSON.stringify(value));
-            delete x[stepNameField];
-            if (['when', 'otherwise', 'expression', 'doCatch', 'doFinally'].includes(value[stepNameField])){
-                return x;
-            } else if (key === 'from'){
-                return x;
-            } else {
-                const newValue: any = {};
-                newValue[stepName] = x;
-                return newValue;
-            }
-        } else {
-            return value;
-        }
     }
 
     static capitalizeName = (name: string) => {

@@ -59,6 +59,7 @@ import {
     PollEnrichDefinition,
     ProcessDefinition,
     PropertyDefinition,
+    PropertyExpressionDefinition,
     RecipientListDefinition,
     RedeliveryPolicyDefinition,
     RemoveHeaderDefinition,
@@ -77,11 +78,9 @@ import {
     RouteTemplateBeanDefinition,
     RouteTemplateDefinition,
     RouteTemplateParameterDefinition,
-    RouteTemplateScriptDefinition,
     RoutingSlipDefinition,
     SagaActionUriDefinition,
     SagaDefinition,
-    SagaOptionDefinition,
     SamplingDefinition,
     ScriptDefinition,
     SetBodyDefinition,
@@ -93,6 +92,9 @@ import {
     StepDefinition,
     StopDefinition,
     SwitchDefinition,
+    TemplatedRouteBeanDefinition,
+    TemplatedRouteDefinition,
+    TemplatedRouteParameterDefinition,
     ThreadPoolProfileDefinition,
     ThreadsDefinition,
     ThrottleDefinition,
@@ -202,30 +204,29 @@ import {
     StickyLoadBalancerDefinition,
     TopicLoadBalancerDefinition,
     WeightedLoadBalancerDefinition,
-    DeleteVerbDefinition,
-    GetVerbDefinition,
-    HeadVerbDefinition,
-    PatchVerbDefinition,
-    PostVerbDefinition,
-    PutVerbDefinition,
+    ApiKeyDefinition,
+    BasicAuthDefinition,
+    BearerTokenDefinition,
+    DeleteDefinition,
+    GetDefinition,
+    HeadDefinition,
+    MutualTLSDefinition,
+    OAuth2Definition,
+    OpenIdConnectDefinition,
+    ParamDefinition,
+    PatchDefinition,
+    PostDefinition,
+    PutDefinition,
+    ResponseHeaderDefinition,
+    ResponseMessageDefinition,
     RestBindingDefinition,
     RestConfigurationDefinition,
     RestDefinition,
-    RestOperationParamDefinition,
-    RestOperationResponseHeaderDefinition,
-    RestOperationResponseMsgDefinition,
     RestPropertyDefinition,
     RestSecuritiesDefinition,
-    RestSecuritiesRequirement,
-    RestSecurityApiKey,
-    RestSecurityBasicAuth,
-    RestSecurityBearerToken,
-    RestSecurityMutualTLS,
-    RestSecurityOAuth2,
-    RestSecurityOpenIdConnect,
     RestsDefinition,
     SecurityDefinition,
-    VerbDefinition,
+    SecurityRequirementsDefinition,
     CustomTransformerDefinition,
     DataFormatTransformerDefinition,
     EndpointTransformerDefinition,
@@ -302,9 +303,6 @@ export class CamelDefinitionApi {
         } 
         if (element?.otherwise !== undefined) { 
             def.otherwise = CamelDefinitionApi.createOtherwiseDefinition(element.otherwise); 
-        } 
-        if (element?.toD !== undefined) { 
-            def.toD = CamelDefinitionApi.createToDynamicDefinition(element.toD); 
         } 
         if (element?.sort !== undefined) { 
             def.sort = CamelDefinitionApi.createSortDefinition(element.sort); 
@@ -431,9 +429,6 @@ export class CamelDefinitionApi {
         } 
         if (element?.step !== undefined) { 
             def.step = CamelDefinitionApi.createStepDefinition(element.step); 
-        } 
-        if (element?.to !== undefined) { 
-            def.to = CamelDefinitionApi.createToDefinition(element.to); 
         } 
         if (element?.choice !== undefined) { 
             def.choice = CamelDefinitionApi.createChoiceDefinition(element.choice); 
@@ -1173,6 +1168,15 @@ export class CamelDefinitionApi {
         return def;
     }
 
+    static createPropertyExpressionDefinition = (element: any): PropertyExpressionDefinition => {
+        
+        const def = element ? new PropertyExpressionDefinition({...element}) : new PropertyExpressionDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+        def.expression = CamelDefinitionApi.createExpressionDefinition(element.expression); 
+
+        return def;
+    }
+
     static createRecipientListDefinition = (element: any): RecipientListDefinition => {
         
         const def = element ? new RecipientListDefinition({...element}) : new RecipientListDefinition();
@@ -1315,9 +1319,6 @@ export class CamelDefinitionApi {
         const def = element ? new RouteTemplateBeanDefinition({...element}) : new RouteTemplateBeanDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
         def.property = element && element?.property ? element?.property.map((x:any) => CamelDefinitionApi.createPropertyDefinition(x)) :[]; 
-        if (element?.script !== undefined) { 
-            def.script = CamelDefinitionApi.createRouteTemplateScriptDefinition(element.script); 
-        } 
 
         return def;
     }
@@ -1338,14 +1339,6 @@ export class CamelDefinitionApi {
     static createRouteTemplateParameterDefinition = (element: any): RouteTemplateParameterDefinition => {
         
         const def = element ? new RouteTemplateParameterDefinition({...element}) : new RouteTemplateParameterDefinition();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
-
-        return def;
-    }
-
-    static createRouteTemplateScriptDefinition = (element: any): RouteTemplateScriptDefinition => {
-        
-        const def = element ? new RouteTemplateScriptDefinition({...element}) : new RouteTemplateScriptDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
 
         return def;
@@ -1373,16 +1366,7 @@ export class CamelDefinitionApi {
         const def = element ? new SagaDefinition({...element}) : new SagaDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
         def.steps = CamelDefinitionApi.createSteps(element?.steps);
-        def.option = element && element?.option ? element?.option.map((x:any) => CamelDefinitionApi.createSagaOptionDefinition(x)) :[]; 
-
-        return def;
-    }
-
-    static createSagaOptionDefinition = (element: any): SagaOptionDefinition => {
-        
-        const def = element ? new SagaOptionDefinition({...element}) : new SagaOptionDefinition();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
-        def.expression = CamelDefinitionApi.createExpressionDefinition(element.expression); 
+        def.option = element && element?.option ? element?.option.map((x:any) => CamelDefinitionApi.createPropertyExpressionDefinition(x)) :[]; 
 
         return def;
     }
@@ -1483,6 +1467,33 @@ export class CamelDefinitionApi {
             def.otherwise = CamelDefinitionApi.createOtherwiseDefinition(element.otherwise); 
         } 
         def.when = element && element?.when ? element?.when.map((x:any) => CamelDefinitionApi.createWhenDefinition(x)) :[]; 
+
+        return def;
+    }
+
+    static createTemplatedRouteBeanDefinition = (element: any): TemplatedRouteBeanDefinition => {
+        
+        const def = element ? new TemplatedRouteBeanDefinition({...element}) : new TemplatedRouteBeanDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+        def.property = element && element?.property ? element?.property.map((x:any) => CamelDefinitionApi.createPropertyDefinition(x)) :[]; 
+
+        return def;
+    }
+
+    static createTemplatedRouteDefinition = (element: any): TemplatedRouteDefinition => {
+        
+        const def = element ? new TemplatedRouteDefinition({...element}) : new TemplatedRouteDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+        def.beans = element && element?.beans ? element?.beans.map((x:any) => CamelDefinitionApi.createNamedBeanDefinition(x)) :[]; 
+        def.parameters = element && element?.parameters ? element?.parameters.map((x:any) => CamelDefinitionApi.createTemplatedRouteParameterDefinition(x)) :[]; 
+
+        return def;
+    }
+
+    static createTemplatedRouteParameterDefinition = (element: any): TemplatedRouteParameterDefinition => {
+        
+        const def = element ? new TemplatedRouteParameterDefinition({...element}) : new TemplatedRouteParameterDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
 
         return def;
     }
@@ -1731,10 +1742,6 @@ export class CamelDefinitionApi {
         
         const def = element ? new WireTapDefinition({...element}) : new WireTapDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
-        if (element?.body !== undefined) { 
-            def.body = CamelDefinitionApi.createExpressionSubElementDefinition(element.body); 
-        } 
-        def.setHeader = element && element?.setHeader ? element?.setHeader.map((x:any) => CamelDefinitionApi.createSetHeaderDefinition(x)) :[]; 
 
         return def;
     }
@@ -2856,128 +2863,144 @@ export class CamelDefinitionApi {
         return def;
     }
 
-    static createDeleteVerbDefinition = (element: any): DeleteVerbDefinition => {
+    static createApiKeyDefinition = (element: any): ApiKeyDefinition => {
         
-        const def = element ? new DeleteVerbDefinition({...element}) : new DeleteVerbDefinition();
+        const def = element ? new ApiKeyDefinition({...element}) : new ApiKeyDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
-        def.security = element && element?.security ? element?.security.map((x:any) => CamelDefinitionApi.createSecurityDefinition(x)) :[]; 
-        if (element?.route !== undefined) { 
-            def.route = CamelDefinitionApi.createRouteDefinition(element.route); 
-        } 
-        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createRestOperationParamDefinition(x)) :[]; 
-        if (element?.toD !== undefined) { 
-            def.toD = CamelDefinitionApi.createToDynamicDefinition(element.toD); 
-        } 
-        if (element?.to !== undefined) { 
-            def.to = CamelDefinitionApi.createToDefinition(element.to); 
-        } 
-        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createRestOperationResponseMsgDefinition(x)) :[]; 
-        def.steps = CamelDefinitionApi.createSteps(element?.steps);
 
         return def;
     }
 
-    static createGetVerbDefinition = (element: any): GetVerbDefinition => {
+    static createBasicAuthDefinition = (element: any): BasicAuthDefinition => {
         
-        const def = element ? new GetVerbDefinition({...element}) : new GetVerbDefinition();
+        const def = element ? new BasicAuthDefinition({...element}) : new BasicAuthDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
-        def.security = element && element?.security ? element?.security.map((x:any) => CamelDefinitionApi.createSecurityDefinition(x)) :[]; 
-        if (element?.route !== undefined) { 
-            def.route = CamelDefinitionApi.createRouteDefinition(element.route); 
-        } 
-        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createRestOperationParamDefinition(x)) :[]; 
-        if (element?.toD !== undefined) { 
-            def.toD = CamelDefinitionApi.createToDynamicDefinition(element.toD); 
-        } 
-        if (element?.to !== undefined) { 
-            def.to = CamelDefinitionApi.createToDefinition(element.to); 
-        } 
-        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createRestOperationResponseMsgDefinition(x)) :[]; 
-        def.steps = CamelDefinitionApi.createSteps(element?.steps);
 
         return def;
     }
 
-    static createHeadVerbDefinition = (element: any): HeadVerbDefinition => {
+    static createBearerTokenDefinition = (element: any): BearerTokenDefinition => {
         
-        const def = element ? new HeadVerbDefinition({...element}) : new HeadVerbDefinition();
+        const def = element ? new BearerTokenDefinition({...element}) : new BearerTokenDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
-        def.security = element && element?.security ? element?.security.map((x:any) => CamelDefinitionApi.createSecurityDefinition(x)) :[]; 
-        if (element?.route !== undefined) { 
-            def.route = CamelDefinitionApi.createRouteDefinition(element.route); 
-        } 
-        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createRestOperationParamDefinition(x)) :[]; 
-        if (element?.toD !== undefined) { 
-            def.toD = CamelDefinitionApi.createToDynamicDefinition(element.toD); 
-        } 
-        if (element?.to !== undefined) { 
-            def.to = CamelDefinitionApi.createToDefinition(element.to); 
-        } 
-        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createRestOperationResponseMsgDefinition(x)) :[]; 
-        def.steps = CamelDefinitionApi.createSteps(element?.steps);
 
         return def;
     }
 
-    static createPatchVerbDefinition = (element: any): PatchVerbDefinition => {
+    static createDeleteDefinition = (element: any): DeleteDefinition => {
         
-        const def = element ? new PatchVerbDefinition({...element}) : new PatchVerbDefinition();
+        const def = element ? new DeleteDefinition({...element}) : new DeleteDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
         def.security = element && element?.security ? element?.security.map((x:any) => CamelDefinitionApi.createSecurityDefinition(x)) :[]; 
-        if (element?.route !== undefined) { 
-            def.route = CamelDefinitionApi.createRouteDefinition(element.route); 
-        } 
-        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createRestOperationParamDefinition(x)) :[]; 
-        if (element?.toD !== undefined) { 
-            def.toD = CamelDefinitionApi.createToDynamicDefinition(element.toD); 
-        } 
-        if (element?.to !== undefined) { 
-            def.to = CamelDefinitionApi.createToDefinition(element.to); 
-        } 
-        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createRestOperationResponseMsgDefinition(x)) :[]; 
-        def.steps = CamelDefinitionApi.createSteps(element?.steps);
+        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createParamDefinition(x)) :[]; 
+        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createResponseMessageDefinition(x)) :[]; 
 
         return def;
     }
 
-    static createPostVerbDefinition = (element: any): PostVerbDefinition => {
+    static createGetDefinition = (element: any): GetDefinition => {
         
-        const def = element ? new PostVerbDefinition({...element}) : new PostVerbDefinition();
+        const def = element ? new GetDefinition({...element}) : new GetDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
         def.security = element && element?.security ? element?.security.map((x:any) => CamelDefinitionApi.createSecurityDefinition(x)) :[]; 
-        if (element?.route !== undefined) { 
-            def.route = CamelDefinitionApi.createRouteDefinition(element.route); 
-        } 
-        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createRestOperationParamDefinition(x)) :[]; 
-        if (element?.toD !== undefined) { 
-            def.toD = CamelDefinitionApi.createToDynamicDefinition(element.toD); 
-        } 
-        if (element?.to !== undefined) { 
-            def.to = CamelDefinitionApi.createToDefinition(element.to); 
-        } 
-        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createRestOperationResponseMsgDefinition(x)) :[]; 
-        def.steps = CamelDefinitionApi.createSteps(element?.steps);
+        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createParamDefinition(x)) :[]; 
+        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createResponseMessageDefinition(x)) :[]; 
 
         return def;
     }
 
-    static createPutVerbDefinition = (element: any): PutVerbDefinition => {
+    static createHeadDefinition = (element: any): HeadDefinition => {
         
-        const def = element ? new PutVerbDefinition({...element}) : new PutVerbDefinition();
+        const def = element ? new HeadDefinition({...element}) : new HeadDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
         def.security = element && element?.security ? element?.security.map((x:any) => CamelDefinitionApi.createSecurityDefinition(x)) :[]; 
-        if (element?.route !== undefined) { 
-            def.route = CamelDefinitionApi.createRouteDefinition(element.route); 
-        } 
-        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createRestOperationParamDefinition(x)) :[]; 
-        if (element?.toD !== undefined) { 
-            def.toD = CamelDefinitionApi.createToDynamicDefinition(element.toD); 
-        } 
-        if (element?.to !== undefined) { 
-            def.to = CamelDefinitionApi.createToDefinition(element.to); 
-        } 
-        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createRestOperationResponseMsgDefinition(x)) :[]; 
-        def.steps = CamelDefinitionApi.createSteps(element?.steps);
+        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createParamDefinition(x)) :[]; 
+        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createResponseMessageDefinition(x)) :[]; 
+
+        return def;
+    }
+
+    static createMutualTLSDefinition = (element: any): MutualTLSDefinition => {
+        
+        const def = element ? new MutualTLSDefinition({...element}) : new MutualTLSDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+
+        return def;
+    }
+
+    static createOAuth2Definition = (element: any): OAuth2Definition => {
+        
+        const def = element ? new OAuth2Definition({...element}) : new OAuth2Definition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+        def.scopes = element && element?.scopes ? element?.scopes.map((x:any) => CamelDefinitionApi.createRestPropertyDefinition(x)) :[]; 
+
+        return def;
+    }
+
+    static createOpenIdConnectDefinition = (element: any): OpenIdConnectDefinition => {
+        
+        const def = element ? new OpenIdConnectDefinition({...element}) : new OpenIdConnectDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+
+        return def;
+    }
+
+    static createParamDefinition = (element: any): ParamDefinition => {
+        
+        const def = element ? new ParamDefinition({...element}) : new ParamDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+        def.examples = element && element?.examples ? element?.examples.map((x:any) => CamelDefinitionApi.createRestPropertyDefinition(x)) :[]; 
+
+        return def;
+    }
+
+    static createPatchDefinition = (element: any): PatchDefinition => {
+        
+        const def = element ? new PatchDefinition({...element}) : new PatchDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+        def.security = element && element?.security ? element?.security.map((x:any) => CamelDefinitionApi.createSecurityDefinition(x)) :[]; 
+        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createParamDefinition(x)) :[]; 
+        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createResponseMessageDefinition(x)) :[]; 
+
+        return def;
+    }
+
+    static createPostDefinition = (element: any): PostDefinition => {
+        
+        const def = element ? new PostDefinition({...element}) : new PostDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+        def.security = element && element?.security ? element?.security.map((x:any) => CamelDefinitionApi.createSecurityDefinition(x)) :[]; 
+        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createParamDefinition(x)) :[]; 
+        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createResponseMessageDefinition(x)) :[]; 
+
+        return def;
+    }
+
+    static createPutDefinition = (element: any): PutDefinition => {
+        
+        const def = element ? new PutDefinition({...element}) : new PutDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+        def.security = element && element?.security ? element?.security.map((x:any) => CamelDefinitionApi.createSecurityDefinition(x)) :[]; 
+        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createParamDefinition(x)) :[]; 
+        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createResponseMessageDefinition(x)) :[]; 
+
+        return def;
+    }
+
+    static createResponseHeaderDefinition = (element: any): ResponseHeaderDefinition => {
+        
+        const def = element ? new ResponseHeaderDefinition({...element}) : new ResponseHeaderDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+
+        return def;
+    }
+
+    static createResponseMessageDefinition = (element: any): ResponseMessageDefinition => {
+        
+        const def = element ? new ResponseMessageDefinition({...element}) : new ResponseMessageDefinition();
+        def.uuid = element?.uuid ? element.uuid : def.uuid;
+        def.examples = element && element?.examples ? element?.examples.map((x:any) => CamelDefinitionApi.createRestPropertyDefinition(x)) :[]; 
+        def.header = element && element?.header ? element?.header.map((x:any) => CamelDefinitionApi.createResponseHeaderDefinition(x)) :[]; 
 
         return def;
     }
@@ -3008,46 +3031,18 @@ export class CamelDefinitionApi {
         
         const def = element ? new RestDefinition({...element}) : new RestDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
-        def.head = element && element?.head ? element?.head.map((x:any) => CamelDefinitionApi.createHeadVerbDefinition(x)) :[]; 
-        def.patch = element && element?.patch ? element?.patch.map((x:any) => CamelDefinitionApi.createPatchVerbDefinition(x)) :[]; 
-        def.post = element && element?.post ? element?.post.map((x:any) => CamelDefinitionApi.createPostVerbDefinition(x)) :[]; 
-        def.get = element && element?.get ? element?.get.map((x:any) => CamelDefinitionApi.createGetVerbDefinition(x)) :[]; 
+        def.head = element && element?.head ? element?.head.map((x:any) => CamelDefinitionApi.createHeadDefinition(x)) :[]; 
+        def.patch = element && element?.patch ? element?.patch.map((x:any) => CamelDefinitionApi.createPatchDefinition(x)) :[]; 
+        def.post = element && element?.post ? element?.post.map((x:any) => CamelDefinitionApi.createPostDefinition(x)) :[]; 
+        def.get = element && element?.get ? element?.get.map((x:any) => CamelDefinitionApi.createGetDefinition(x)) :[]; 
         if (element?.securityRequirements !== undefined) { 
-            def.securityRequirements = CamelDefinitionApi.createRestSecuritiesRequirement(element.securityRequirements); 
+            def.securityRequirements = CamelDefinitionApi.createSecurityRequirementsDefinition(element.securityRequirements); 
         } 
-        def.verb = element && element?.verb ? element?.verb.map((x:any) => CamelDefinitionApi.createVerbDefinition(x)) :[]; 
-        def.delete = element && element?.delete ? element?.delete.map((x:any) => CamelDefinitionApi.createDeleteVerbDefinition(x)) :[]; 
+        def.delete = element && element?.delete ? element?.delete.map((x:any) => CamelDefinitionApi.createDeleteDefinition(x)) :[]; 
         if (element?.securityDefinitions !== undefined) { 
             def.securityDefinitions = CamelDefinitionApi.createRestSecuritiesDefinition(element.securityDefinitions); 
         } 
-        def.put = element && element?.put ? element?.put.map((x:any) => CamelDefinitionApi.createPutVerbDefinition(x)) :[]; 
-
-        return def;
-    }
-
-    static createRestOperationParamDefinition = (element: any): RestOperationParamDefinition => {
-        
-        const def = element ? new RestOperationParamDefinition({...element}) : new RestOperationParamDefinition();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
-        def.examples = element && element?.examples ? element?.examples.map((x:any) => CamelDefinitionApi.createRestPropertyDefinition(x)) :[]; 
-
-        return def;
-    }
-
-    static createRestOperationResponseHeaderDefinition = (element: any): RestOperationResponseHeaderDefinition => {
-        
-        const def = element ? new RestOperationResponseHeaderDefinition({...element}) : new RestOperationResponseHeaderDefinition();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
-
-        return def;
-    }
-
-    static createRestOperationResponseMsgDefinition = (element: any): RestOperationResponseMsgDefinition => {
-        
-        const def = element ? new RestOperationResponseMsgDefinition({...element}) : new RestOperationResponseMsgDefinition();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
-        def.examples = element && element?.examples ? element?.examples.map((x:any) => CamelDefinitionApi.createRestPropertyDefinition(x)) :[]; 
-        def.header = element && element?.header ? element?.header.map((x:any) => CamelDefinitionApi.createRestOperationResponseHeaderDefinition(x)) :[]; 
+        def.put = element && element?.put ? element?.put.map((x:any) => CamelDefinitionApi.createPutDefinition(x)) :[]; 
 
         return def;
     }
@@ -3065,83 +3060,23 @@ export class CamelDefinitionApi {
         const def = element ? new RestSecuritiesDefinition({...element}) : new RestSecuritiesDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
         if (element?.openIdConnect !== undefined) { 
-            def.openIdConnect = CamelDefinitionApi.createRestSecurityOpenIdConnect(element.openIdConnect); 
+            def.openIdConnect = CamelDefinitionApi.createOpenIdConnectDefinition(element.openIdConnect); 
         } 
         if (element?.apiKey !== undefined) { 
-            def.apiKey = CamelDefinitionApi.createRestSecurityApiKey(element.apiKey); 
+            def.apiKey = CamelDefinitionApi.createApiKeyDefinition(element.apiKey); 
         } 
         if (element?.basicAuth !== undefined) { 
-            def.basicAuth = CamelDefinitionApi.createRestSecurityBasicAuth(element.basicAuth); 
+            def.basicAuth = CamelDefinitionApi.createBasicAuthDefinition(element.basicAuth); 
         } 
         if (element?.mutualTls !== undefined) { 
-            def.mutualTls = CamelDefinitionApi.createRestSecurityMutualTLS(element.mutualTls); 
+            def.mutualTls = CamelDefinitionApi.createMutualTLSDefinition(element.mutualTls); 
         } 
         if (element?.bearer !== undefined) { 
-            def.bearer = CamelDefinitionApi.createRestSecurityBearerToken(element.bearer); 
+            def.bearer = CamelDefinitionApi.createBearerTokenDefinition(element.bearer); 
         } 
         if (element?.oauth2 !== undefined) { 
-            def.oauth2 = CamelDefinitionApi.createRestSecurityOAuth2(element.oauth2); 
+            def.oauth2 = CamelDefinitionApi.createOAuth2Definition(element.oauth2); 
         } 
-
-        return def;
-    }
-
-    static createRestSecuritiesRequirement = (element: any): RestSecuritiesRequirement => {
-        
-        const def = element ? new RestSecuritiesRequirement({...element}) : new RestSecuritiesRequirement();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
-        if (element?.securityRequirement !== undefined) { 
-            def.securityRequirement = CamelDefinitionApi.createSecurityDefinition(element.securityRequirement); 
-        } 
-
-        return def;
-    }
-
-    static createRestSecurityApiKey = (element: any): RestSecurityApiKey => {
-        
-        const def = element ? new RestSecurityApiKey({...element}) : new RestSecurityApiKey();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
-
-        return def;
-    }
-
-    static createRestSecurityBasicAuth = (element: any): RestSecurityBasicAuth => {
-        
-        const def = element ? new RestSecurityBasicAuth({...element}) : new RestSecurityBasicAuth();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
-
-        return def;
-    }
-
-    static createRestSecurityBearerToken = (element: any): RestSecurityBearerToken => {
-        
-        const def = element ? new RestSecurityBearerToken({...element}) : new RestSecurityBearerToken();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
-
-        return def;
-    }
-
-    static createRestSecurityMutualTLS = (element: any): RestSecurityMutualTLS => {
-        
-        const def = element ? new RestSecurityMutualTLS({...element}) : new RestSecurityMutualTLS();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
-
-        return def;
-    }
-
-    static createRestSecurityOAuth2 = (element: any): RestSecurityOAuth2 => {
-        
-        const def = element ? new RestSecurityOAuth2({...element}) : new RestSecurityOAuth2();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
-        def.scopes = element && element?.scopes ? element?.scopes.map((x:any) => CamelDefinitionApi.createRestPropertyDefinition(x)) :[]; 
-
-        return def;
-    }
-
-    static createRestSecurityOpenIdConnect = (element: any): RestSecurityOpenIdConnect => {
-        
-        const def = element ? new RestSecurityOpenIdConnect({...element}) : new RestSecurityOpenIdConnect();
-        def.uuid = element?.uuid ? element.uuid : def.uuid;
 
         return def;
     }
@@ -3163,23 +3098,13 @@ export class CamelDefinitionApi {
         return def;
     }
 
-    static createVerbDefinition = (element: any): VerbDefinition => {
+    static createSecurityRequirementsDefinition = (element: any): SecurityRequirementsDefinition => {
         
-        const def = element ? new VerbDefinition({...element}) : new VerbDefinition();
+        const def = element ? new SecurityRequirementsDefinition({...element}) : new SecurityRequirementsDefinition();
         def.uuid = element?.uuid ? element.uuid : def.uuid;
-        def.security = element && element?.security ? element?.security.map((x:any) => CamelDefinitionApi.createSecurityDefinition(x)) :[]; 
-        if (element?.route !== undefined) { 
-            def.route = CamelDefinitionApi.createRouteDefinition(element.route); 
+        if (element?.securityRequirement !== undefined) { 
+            def.securityRequirement = CamelDefinitionApi.createSecurityDefinition(element.securityRequirement); 
         } 
-        def.param = element && element?.param ? element?.param.map((x:any) => CamelDefinitionApi.createRestOperationParamDefinition(x)) :[]; 
-        if (element?.toD !== undefined) { 
-            def.toD = CamelDefinitionApi.createToDynamicDefinition(element.toD); 
-        } 
-        if (element?.to !== undefined) { 
-            def.to = CamelDefinitionApi.createToDefinition(element.to); 
-        } 
-        def.responseMessage = element && element?.responseMessage ? element?.responseMessage.map((x:any) => CamelDefinitionApi.createRestOperationResponseMsgDefinition(x)) :[]; 
-        def.steps = CamelDefinitionApi.createSteps(element?.steps);
 
         return def;
     }
@@ -3446,6 +3371,7 @@ export class CamelDefinitionApi {
             case 'PollEnrichDefinition': return CamelDefinitionApi.createPollEnrichDefinition(newBody);
             case 'ProcessDefinition': return CamelDefinitionApi.createProcessDefinition(newBody);
             case 'PropertyDefinition': return CamelDefinitionApi.createPropertyDefinition(newBody);
+            case 'PropertyExpressionDefinition': return CamelDefinitionApi.createPropertyExpressionDefinition(newBody);
             case 'RecipientListDefinition': return CamelDefinitionApi.createRecipientListDefinition(newBody);
             case 'RedeliveryPolicyDefinition': return CamelDefinitionApi.createRedeliveryPolicyDefinition(newBody);
             case 'RemoveHeaderDefinition': return CamelDefinitionApi.createRemoveHeaderDefinition(newBody);
@@ -3464,11 +3390,9 @@ export class CamelDefinitionApi {
             case 'RouteTemplateBeanDefinition': return CamelDefinitionApi.createRouteTemplateBeanDefinition(newBody);
             case 'RouteTemplateDefinition': return CamelDefinitionApi.createRouteTemplateDefinition(newBody);
             case 'RouteTemplateParameterDefinition': return CamelDefinitionApi.createRouteTemplateParameterDefinition(newBody);
-            case 'RouteTemplateScriptDefinition': return CamelDefinitionApi.createRouteTemplateScriptDefinition(newBody);
             case 'RoutingSlipDefinition': return CamelDefinitionApi.createRoutingSlipDefinition(newBody);
             case 'SagaActionUriDefinition': return CamelDefinitionApi.createSagaActionUriDefinition(newBody);
             case 'SagaDefinition': return CamelDefinitionApi.createSagaDefinition(newBody);
-            case 'SagaOptionDefinition': return CamelDefinitionApi.createSagaOptionDefinition(newBody);
             case 'SamplingDefinition': return CamelDefinitionApi.createSamplingDefinition(newBody);
             case 'ScriptDefinition': return CamelDefinitionApi.createScriptDefinition(newBody);
             case 'SetBodyDefinition': return CamelDefinitionApi.createSetBodyDefinition(newBody);
@@ -3480,6 +3404,9 @@ export class CamelDefinitionApi {
             case 'StepDefinition': return CamelDefinitionApi.createStepDefinition(newBody);
             case 'StopDefinition': return CamelDefinitionApi.createStopDefinition(newBody);
             case 'SwitchDefinition': return CamelDefinitionApi.createSwitchDefinition(newBody);
+            case 'TemplatedRouteBeanDefinition': return CamelDefinitionApi.createTemplatedRouteBeanDefinition(newBody);
+            case 'TemplatedRouteDefinition': return CamelDefinitionApi.createTemplatedRouteDefinition(newBody);
+            case 'TemplatedRouteParameterDefinition': return CamelDefinitionApi.createTemplatedRouteParameterDefinition(newBody);
             case 'ThreadPoolProfileDefinition': return CamelDefinitionApi.createThreadPoolProfileDefinition(newBody);
             case 'ThreadsDefinition': return CamelDefinitionApi.createThreadsDefinition(newBody);
             case 'ThrottleDefinition': return CamelDefinitionApi.createThrottleDefinition(newBody);
@@ -3589,30 +3516,29 @@ export class CamelDefinitionApi {
             case 'StickyLoadBalancerDefinition': return CamelDefinitionApi.createStickyLoadBalancerDefinition(newBody);
             case 'TopicLoadBalancerDefinition': return CamelDefinitionApi.createTopicLoadBalancerDefinition(newBody);
             case 'WeightedLoadBalancerDefinition': return CamelDefinitionApi.createWeightedLoadBalancerDefinition(newBody);
-            case 'DeleteVerbDefinition': return CamelDefinitionApi.createDeleteVerbDefinition(newBody);
-            case 'GetVerbDefinition': return CamelDefinitionApi.createGetVerbDefinition(newBody);
-            case 'HeadVerbDefinition': return CamelDefinitionApi.createHeadVerbDefinition(newBody);
-            case 'PatchVerbDefinition': return CamelDefinitionApi.createPatchVerbDefinition(newBody);
-            case 'PostVerbDefinition': return CamelDefinitionApi.createPostVerbDefinition(newBody);
-            case 'PutVerbDefinition': return CamelDefinitionApi.createPutVerbDefinition(newBody);
+            case 'ApiKeyDefinition': return CamelDefinitionApi.createApiKeyDefinition(newBody);
+            case 'BasicAuthDefinition': return CamelDefinitionApi.createBasicAuthDefinition(newBody);
+            case 'BearerTokenDefinition': return CamelDefinitionApi.createBearerTokenDefinition(newBody);
+            case 'DeleteDefinition': return CamelDefinitionApi.createDeleteDefinition(newBody);
+            case 'GetDefinition': return CamelDefinitionApi.createGetDefinition(newBody);
+            case 'HeadDefinition': return CamelDefinitionApi.createHeadDefinition(newBody);
+            case 'MutualTLSDefinition': return CamelDefinitionApi.createMutualTLSDefinition(newBody);
+            case 'OAuth2Definition': return CamelDefinitionApi.createOAuth2Definition(newBody);
+            case 'OpenIdConnectDefinition': return CamelDefinitionApi.createOpenIdConnectDefinition(newBody);
+            case 'ParamDefinition': return CamelDefinitionApi.createParamDefinition(newBody);
+            case 'PatchDefinition': return CamelDefinitionApi.createPatchDefinition(newBody);
+            case 'PostDefinition': return CamelDefinitionApi.createPostDefinition(newBody);
+            case 'PutDefinition': return CamelDefinitionApi.createPutDefinition(newBody);
+            case 'ResponseHeaderDefinition': return CamelDefinitionApi.createResponseHeaderDefinition(newBody);
+            case 'ResponseMessageDefinition': return CamelDefinitionApi.createResponseMessageDefinition(newBody);
             case 'RestBindingDefinition': return CamelDefinitionApi.createRestBindingDefinition(newBody);
             case 'RestConfigurationDefinition': return CamelDefinitionApi.createRestConfigurationDefinition(newBody);
             case 'RestDefinition': return CamelDefinitionApi.createRestDefinition(newBody);
-            case 'RestOperationParamDefinition': return CamelDefinitionApi.createRestOperationParamDefinition(newBody);
-            case 'RestOperationResponseHeaderDefinition': return CamelDefinitionApi.createRestOperationResponseHeaderDefinition(newBody);
-            case 'RestOperationResponseMsgDefinition': return CamelDefinitionApi.createRestOperationResponseMsgDefinition(newBody);
             case 'RestPropertyDefinition': return CamelDefinitionApi.createRestPropertyDefinition(newBody);
             case 'RestSecuritiesDefinition': return CamelDefinitionApi.createRestSecuritiesDefinition(newBody);
-            case 'RestSecuritiesRequirement': return CamelDefinitionApi.createRestSecuritiesRequirement(newBody);
-            case 'RestSecurityApiKey': return CamelDefinitionApi.createRestSecurityApiKey(newBody);
-            case 'RestSecurityBasicAuth': return CamelDefinitionApi.createRestSecurityBasicAuth(newBody);
-            case 'RestSecurityBearerToken': return CamelDefinitionApi.createRestSecurityBearerToken(newBody);
-            case 'RestSecurityMutualTLS': return CamelDefinitionApi.createRestSecurityMutualTLS(newBody);
-            case 'RestSecurityOAuth2': return CamelDefinitionApi.createRestSecurityOAuth2(newBody);
-            case 'RestSecurityOpenIdConnect': return CamelDefinitionApi.createRestSecurityOpenIdConnect(newBody);
             case 'RestsDefinition': return CamelDefinitionApi.createRestsDefinition(newBody);
             case 'SecurityDefinition': return CamelDefinitionApi.createSecurityDefinition(newBody);
-            case 'VerbDefinition': return CamelDefinitionApi.createVerbDefinition(newBody);
+            case 'SecurityRequirementsDefinition': return CamelDefinitionApi.createSecurityRequirementsDefinition(newBody);
             case 'CustomTransformerDefinition': return CamelDefinitionApi.createCustomTransformerDefinition(newBody);
             case 'DataFormatTransformerDefinition': return CamelDefinitionApi.createDataFormatTransformerDefinition(newBody);
             case 'EndpointTransformerDefinition': return CamelDefinitionApi.createEndpointTransformerDefinition(newBody);

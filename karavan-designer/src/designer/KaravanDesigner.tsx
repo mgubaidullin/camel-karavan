@@ -59,6 +59,7 @@ export class KaravanDesigner extends React.Component<Props, State> {
 
     componentDidUpdate = (prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any) => {
         if (prevState.key !== this.state.key) {
+
             this.props.onSave?.call(this, this.state.integration.metadata.name, this.getCode(this.state.integration));
         }
     }
@@ -74,13 +75,15 @@ export class KaravanDesigner extends React.Component<Props, State> {
 
     getTab(title: string, tooltip: string, icon: string) {
         const counts = CamelUi.getFlowCounts(this.state.integration);
+        const count =  counts.has(icon) && counts.get(icon) ? counts.get(icon) : undefined;
+        const showCount = count && count > 0;
         return (
             <Tooltip position={"bottom"}
                      content={<div>{tooltip}</div>}>
                 <div className="top-menu-item">
                     <TabTitleIcon>{this.getIcon(icon)}</TabTitleIcon>
                     <TabTitleText>{title}</TabTitleText>
-                    {counts.has(icon) && <Badge isRead className="count">{counts.get(icon)}</Badge>}
+                    {showCount && <Badge isRead className="count">{counts.get(icon)}</Badge>}
                 </div>
             </Tooltip>
 
@@ -185,7 +188,7 @@ export class KaravanDesigner extends React.Component<Props, State> {
                     <Tab eventKey='dependencies' title={this.getTab("Dependencies", "Dependencies", "dependencies")}></Tab>
                     <Tab eventKey='error' title={this.getTab("Error", "Error Handler configuration", "error")}></Tab>
                     <Tab eventKey='exception' title={this.getTab("Exceptions", "Exception Clauses per type", "exception")}></Tab>
-                    <Tab eventKey='templates' title={this.getTab("Templates", "Route Templates", "template")}></Tab>
+                    {/*<Tab eventKey='templates' title={this.getTab("Templates", "Route Templates", "template")}></Tab>*/}
                 </Tabs>
                 {tab === 'routes' && <RouteDesigner integration={this.state.integration}
                                                     onSave={(integration) => this.save(integration)}

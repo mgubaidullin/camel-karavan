@@ -32,7 +32,7 @@ import {DslConnections} from "./DslConnections";
 import PlusIcon from "@patternfly/react-icons/dist/esm/icons/plus-icon";
 import {DslElement} from "./DslElement";
 import {EventBus} from "../utils/EventBus";
-import {CamelUi} from "../utils/CamelUi";
+import {CamelUi, RouteToCreate} from "../utils/CamelUi";
 
 interface Props {
     onSave?: (integration: Integration) => void
@@ -97,10 +97,25 @@ export class RouteDesigner extends React.Component<Props, State> {
         }
     };
 
-    onPropertyUpdate = (element: CamelElement, updatedUuid: string) => {
-        const clone = CamelUtil.cloneIntegration(this.state.integration);
-        const i = CamelDefinitionApiExt.updateIntegration(clone, element, updatedUuid);
-        this.setState({integration: i, key: Math.random().toString()});
+    onPropertyUpdate = (element: CamelElement, updatedUuid: string, newRoute?: RouteToCreate) => {
+        if (newRoute) {
+            let i = CamelDefinitionApiExt.updateIntegrationRouteElement(this.state.integration, element);
+            const f = CamelDefinitionApi.createFromDefinition({uri: newRoute.componentName + ":" + newRoute.name})
+            const r = CamelDefinitionApi.createRouteDefinition({from: f, id: newRoute.name})
+            i = CamelDefinitionApiExt.addStepToIntegration(i, r, '');
+            const clone = CamelUtil.cloneIntegration(i);
+            this.setState({
+                integration: clone,
+                key: Math.random().toString(),
+                showSelector: false,
+                selectedStep: element,
+                selectedUuid: element.uuid
+            });
+        } else {
+            const clone = CamelUtil.cloneIntegration(this.state.integration);
+            const i = CamelDefinitionApiExt.updateIntegrationRouteElement(clone, element);
+            this.setState({integration: i, key: Math.random().toString()});
+        }
     }
 
     showDeleteConfirmation = (id: string) => {
@@ -233,13 +248,13 @@ export class RouteDesigner extends React.Component<Props, State> {
     }
 
     getGraph() {
-        const integrations = CamelUi.getRoutes(this.state.integration);
+        const routes = CamelUi.getRoutes(this.state.integration);
         return (
             <div className="graph">
                 <DslConnections height={this.state.height} width={this.state.width} top={this.state.top} integration={this.state.integration}/>
                 <div className="flows" data-click="FLOWS" onClick={event => this.unselectElement(event)}
                      ref={el => this.onResizePage(el)}>
-                    {integrations?.map((route: any, index: number) => (
+                    {routes?.map((route: any, index: number) => (
                         <DslElement key={route.uuid + this.state.key}
                                     openSelector={this.openSelector}
                                     deleteElement={this.showDeleteConfirmation}
@@ -255,10 +270,10 @@ export class RouteDesigner extends React.Component<Props, State> {
                     ))}
                     <div className="add-flow">
                         <Button
-                            variant={integrations.length === 0 ? "primary" : "secondary"}
+                            variant={routes.length === 0 ? "primary" : "secondary"}
                             data-click="ADD_ROUTE"
                             icon={<PlusIcon/>}
-                            onClick={e => this.openSelector(undefined, undefined)}>Add new route
+                            onClick={e => this.openSelector(undefined, undefined)}>Create new route
                         </Button>
                     </div>
                 </div>

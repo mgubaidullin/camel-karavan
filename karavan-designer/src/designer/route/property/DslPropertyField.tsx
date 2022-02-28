@@ -23,7 +23,7 @@ import {
     Select,
     SelectVariant,
     SelectDirection,
-    SelectOption, ExpandableSection, TextArea, Chip, TextInputGroup, TextInputGroupMain, TextInputGroupUtilities, ChipGroup, Button, Text, Tooltip
+    SelectOption, ExpandableSection, TextArea, Chip, TextInputGroup, TextInputGroupMain, TextInputGroupUtilities, ChipGroup, Button, Text, Tooltip, Card
 } from '@patternfly/react-core';
 import '../../karavan.css';
 import "@patternfly/patternfly/patternfly.css";
@@ -33,7 +33,7 @@ import {CamelUtil} from "karavan-core/lib/api/CamelUtil";
 import { PropertyMeta} from "karavan-core/lib/model/CamelMetadata";
 import {CamelDefinitionApiExt} from "karavan-core/lib/api/CamelDefinitionApiExt";
 import {ExpressionField} from "./ExpressionField";
-import {CamelUi} from "../../utils/CamelUi";
+import {CamelUi, RouteToCreate} from "../../utils/CamelUi";
 import {ComponentParameterField} from "./ComponentParameterField";
 import {DataFormatDefinition} from "karavan-core/lib/model/CamelDefinition";
 import {Integration, CamelElement} from "karavan-core/lib/model/IntegrationDefinition";
@@ -43,14 +43,15 @@ import PlusIcon from "@patternfly/react-icons/dist/esm/icons/plus-icon";
 import {ObjectField} from "./ObjectField";
 import {CamelDefinitionApi} from "karavan-core/lib/api/CamelDefinitionApi";
 import AddIcon from "@patternfly/react-icons/dist/js/icons/plus-circle-icon";
+import {MediaTypes} from "../../utils/MediaTypes";
 
 interface Props {
     property: PropertyMeta,
     value: any,
-    onChange?: (fieldId: string, value: string | number | boolean | any) => void,
-    onExpressionChange?: (value: ExpressionDefinition) => void,
+    onChange?: (fieldId: string, value: string | number | boolean | any, newRoute?: RouteToCreate) => void,
+    onExpressionChange?: (propertyName: string, exp:ExpressionDefinition) => void,
     onDataFormatChange?: (value: DataFormatDefinition) => void,
-    onParameterChange?: (parameter: string, value: string | number | boolean | any, pathParameter?: boolean) => void,
+    onParameterChange?: (parameter: string, value: string | number | boolean | any, pathParameter?: boolean, newRoute?: RouteToCreate) => void,
     element?: CamelElement
     integration: Integration,
 }
@@ -69,16 +70,20 @@ export class DslPropertyField extends React.Component<Props, State> {
         isShowAdvanced: false
     }
 
-    openSelect = (propertyName: string) => {
-        this.setState({selectStatus: new Map<string, boolean>([[propertyName, true]])});
+    openSelect = (propertyName: string, isExpanded: boolean) => {
+        this.setState({selectStatus: new Map<string, boolean>([[propertyName, isExpanded]])});
     }
+
+    clearSelection = (propertyName: string) => {
+        this.setState({selectStatus: new Map<string, boolean>([[propertyName, false]])});
+    };
 
     isSelectOpen = (propertyName: string): boolean => {
         return this.state.selectStatus.has(propertyName) && this.state.selectStatus.get(propertyName) === true;
     }
 
-    propertyChanged = (fieldId: string, value: string | number | boolean | any) => {
-        this.props.onChange?.call(this, fieldId, value);
+    propertyChanged = (fieldId: string, value: string | number | boolean | any, newRoute?: RouteToCreate) => {
+        this.props.onChange?.call(this, fieldId, value, newRoute);
         this.setState({selectStatus: new Map<string, boolean>([[fieldId, false]])});
     }
 
@@ -128,10 +133,15 @@ export class DslPropertyField extends React.Component<Props, State> {
         }
     }
 
+    isUriReadOnly = (property: PropertyMeta): boolean => {
+        const dslName:string = this.props.element?.dslName || '';
+        return property.name === 'uri' && !['ToDynamicDefinition', 'WireTapDefinition'].includes(dslName)
+    }
+
     getTextField = (property: PropertyMeta, value: any) => {
         return (
             <TextInput
-                className="text-field" isRequired
+                className="text-field" isRequired isReadOnly={this.isUriReadOnly(property)}
                 type={['integer', 'number'].includes(property.type) ? 'number' : (property.secret ? "password" : "text")}
                 id={property.name} name={property.name}
                 value={value?.toString()}
@@ -191,7 +201,7 @@ export class DslPropertyField extends React.Component<Props, State> {
                 variant={SelectVariant.single}
                 aria-label={property.name}
                 onToggle={isExpanded => {
-                    this.openSelect(property.name)
+                    this.openSelect(property.name, isExpanded)
                 }}
                 onSelect={(e, value, isPlaceholder) => this.propertyChanged(property.name, (!isPlaceholder ? value : undefined))}
                 selections={value}
@@ -216,7 +226,7 @@ export class DslPropertyField extends React.Component<Props, State> {
                 variant={SelectVariant.single}
                 aria-label={property.name}
                 onToggle={isExpanded => {
-                    this.openSelect(property.name)
+                    this.openSelect(property.name, isExpanded)
                 }}
                 onSelect={(e, value, isPlaceholder) => this.propertyChanged(property.name, (!isPlaceholder ? value : undefined))}
                 selections={value}
@@ -229,13 +239,115 @@ export class DslPropertyField extends React.Component<Props, State> {
         )
     }
 
+    getMediaTypeSelectOptions(filter?: string){
+        return filter
+        ? MediaTypes.filter(mt => mt.includes(filter)).map((value: string) => <SelectOption key={value} value={value.trim()}/>)
+        : MediaTypes.map((value: string) => <SelectOption key={value} value={value.trim()}/>);
+    }
+
+    getMediaTypeSelect = (property: PropertyMeta, value: any) => {
+        return (
+            <Select
+                placeholderText="Select Media Type"
+                variant={SelectVariant.typeahead}
+                aria-label={property.name}
+                onToggle={isExpanded => {
+                    this.openSelect(property.name, isExpanded)
+                }}
+                onSelect={(e, value, isPlaceholder) => this.propertyChanged(property.name, (!isPlaceholder ? value : undefined))}
+                selections={value}
+                isOpen={this.isSelectOpen(property.name)}
+                isCreatable={false}
+                isInputFilterPersisted={false}
+                onFilter={(e, text) => this.getMediaTypeSelectOptions(text)}
+                aria-labelledby={property.name}
+                direction={SelectDirection.down}
+            >
+                {this.getMediaTypeSelectOptions()}
+            </Select>
+        )
+    }
+
+     canBeInternalUri = (property: PropertyMeta, element?: CamelElement): boolean => {
+        if  (element?.dslName === 'WireTapDefinition' && property.name === 'uri') {
+            return true;
+        } else if  (element?.dslName === 'SagaDefinition' && ['compensation', 'completion'].includes(property.name)) {
+            return true;
+        } else if  (element && ['GetDefinition', 'PostDefinition', 'PutDefinition', 'PatchDefinition', 'DeleteDefinition', 'HeadDefinition'].includes(element?.dslName) && property.name === 'to') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    canBeMediaType = (property: PropertyMeta, element?: CamelElement): boolean => {
+        if  (element
+            && ['RestDefinition', 'GetDefinition', 'PostDefinition', 'PutDefinition', 'PatchDefinition', 'DeleteDefinition', 'HeadDefinition'].includes(element?.dslName)
+            && ['consumes', 'produces'].includes(property.name)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    getInternalUriSelect = (property: PropertyMeta, value: any) => {
+        const selectOptions: JSX.Element[] = [];
+        const urls = CamelUi.getInternalRouteUris(this.props.integration, "direct");
+        urls.push(...CamelUi.getInternalRouteUris(this.props.integration, "seda"));
+        if (urls && urls.length > 0) {
+            selectOptions.push(...urls.map((value: string) =>
+                <SelectOption key={value} value={value.trim()}/>));
+        }
+        return (
+            <Select
+                placeholderText="Select or type an URI"
+                variant={SelectVariant.typeahead}
+                aria-label={property.name}
+                onClear={event => this.clearSelection(property.name)}
+                onToggle={isExpanded => {
+                    this.openSelect(property.name, isExpanded)
+                }}
+                onSelect={(e, value, isPlaceholder) => {
+                    const url = value.toString().split(":");
+                    const newRoute = !urls.includes(value.toString()) && (['direct', 'seda'].includes(url[0])) ? new RouteToCreate(url[0], url[1]) : undefined;
+                    this.propertyChanged(property.name, (!isPlaceholder ? value : undefined), newRoute)
+                }}
+                selections={value}
+                isOpen={this.isSelectOpen(property.name)}
+                isCreatable={true}
+                isInputFilterPersisted={true}
+                aria-labelledby={property.name}
+                direction={SelectDirection.down}
+            >
+                {selectOptions}
+            </Select>
+        )
+    }
+
+    onMultiValueObjectUpdate = (index: number, fieldId: string, value: CamelElement) => {
+        const mValue = [...this.props.value];
+        mValue[index] = value;
+        this.props.onChange?.call(this, fieldId, mValue);
+    }
+
     getMultiValueObjectField = (property: PropertyMeta, value: any) => {
         return (
             <div>
                 {value && Array.from(value).map((v: any, index: number) => (
-                    <div key={property + "-" + index}>{this.getObjectField(property, v)}</div>
+                    <Card key={property + "-" + index} className="object-value">
+                        <div className="object">
+                            {value && <ObjectField property={property} value={v} onPropertyUpdate={(f, v) => this.onMultiValueObjectUpdate(index, f, v)} integration={this.props.integration} />}
+                        </div>
+                        <Button variant="link" className="delete-button" onClick={e => {
+                            const v = Array.from(value);
+                            v.splice(index, 1);
+                            this.propertyChanged(property.name,v);
+                        }}><DeleteIcon/></Button>
+                    </Card>
                 ))}
+                <Button variant="link" className="add-button" onClick={e => this.propertyChanged(property.name, [...value, CamelDefinitionApi.createStep(property.type, {})])}><AddIcon/>{"Add " + property.displayName}</Button>
             </div>
+
         )
     }
 
@@ -269,6 +381,7 @@ export class DslPropertyField extends React.Component<Props, State> {
                     <ComponentParameterField
                         key={kp.name}
                         property={kp}
+                        element={this.props.element}
                         integration={this.props.integration}
                         value={CamelDefinitionApiExt.getParametersValue(this.props.element, kp.name, kp.kind === 'path')}
                         onParameterChange={this.props.onParameterChange}
@@ -341,7 +454,14 @@ export class DslPropertyField extends React.Component<Props, State> {
                     && this.getMultiValueObjectField(property, value)}
                 {property.name === 'expression' && property.type === "string" && !property.isArray
                     && this.getTextArea(property, value)}
-                {['string', 'duration', 'integer', 'number'].includes(property.type) && property.name !== 'expression' && !property.name.endsWith("Ref") && !property.isArray && !property.enumVals
+                {this.canBeInternalUri(property, this.props.element)
+                    && this.getInternalUriSelect(property, value)}
+                {this.canBeMediaType(property, this.props.element)
+                    && this.getMediaTypeSelect(property, value)}
+                {['string', 'duration', 'integer', 'number'].includes(property.type) && property.name !== 'expression' && !property.name.endsWith("Ref")
+                    && !property.isArray && !property.enumVals
+                    && !this.canBeInternalUri(property, this.props.element)
+                    && !this.canBeMediaType(property, this.props.element)
                     && this.getTextField(property, value)}
                 {['string'].includes(property.type) && property.name.endsWith("Ref") && !property.isArray && !property.enumVals
                     && this.getSelectBean(property, value)}
