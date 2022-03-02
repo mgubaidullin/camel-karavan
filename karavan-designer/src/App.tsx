@@ -146,9 +146,9 @@ class App extends React.Component<Props, State> {
             // '                           message: hello22s\n' +
             // '                           logName: log22\n' +
             // '                otherwise: {}\n'+
-            '    - rest-configuration:\n' +
+            '    - restConfiguration:\n' +
             '        component: "platform-http"\n' +
-            '        context-path: "/base"  \n' +
+            '        contextPath: "/base"  \n' +
             '        port: 8081\n' +
             '    - rest:\n' +
             '        path: "/"\n' +
@@ -247,6 +247,7 @@ class App extends React.Component<Props, State> {
                                  onSave={(filename, yaml) => this.save(filename, yaml)}
                                  borderColor="#fb8824"
                                  borderColorSelected="#303284"
+                                 backward={true}
                                  dark={document.body.className.includes('vscode-dark')}
                 />
             </Page>
