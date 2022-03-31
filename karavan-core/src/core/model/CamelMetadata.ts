@@ -335,7 +335,7 @@ export const CamelDataFormatMetadata: ElementMeta[] = [
         new PropertyMeta('id', 'Id', "The id of this node", 'string', '', '', false, false, false, false, ''),
     ]),
     new ElementMeta('fhirJson', 'FhirJsonDataFormat', 'FHIR JSon', "Marshall and unmarshall FHIR objects to/from JSON.", 'dataformat,transformation,hl7,json', [
-        new PropertyMeta('fhirVersion', 'Fhir Version', "The version of FHIR to use. Possible values are: DSTU2,DSTU2_HL7ORG,DSTU2_1,DSTU3,R4", 'string', 'DSTU2, DSTU2_HL7ORG, DSTU2_1, DSTU3, R4', 'DSTU3', false, false, false, false, ''),
+        new PropertyMeta('fhirVersion', 'Fhir Version', "The version of FHIR to use. Possible values are: DSTU2,DSTU2_HL7ORG,DSTU2_1,DSTU3,R4,R5", 'string', 'DSTU2, DSTU2_HL7ORG, DSTU2_1, DSTU3, R4, R5', 'R4', false, false, false, false, ''),
         new PropertyMeta('prettyPrint', 'Pretty Print', "Sets the pretty print flag, meaning that the parser will encode resources with human-readable spacing and newlines between elements instead of condensing output as much as possible.", 'boolean', '', 'false', false, false, false, false, ''),
         new PropertyMeta('serverBaseUrl', 'Server Base Url', "Sets the server's base URL used by this parser. If a value is set, resource references will be turned into relative references if they are provided as absolute URLs but have a base matching the given base.", 'string', '', '', false, false, false, false, 'advanced'),
         new PropertyMeta('omitResourceId', 'Omit Resource Id', "If set to true (default is false) the ID of any resources being encoded will not be included in the output. Note that this does not apply to contained resources, only to root resources. In other words, if this is set to true, contained resources will still have local IDs but the outer/containing ID will not have an ID.", 'boolean', '', 'false', false, false, false, false, 'advanced'),
@@ -522,7 +522,7 @@ export const CamelDataFormatMetadata: ElementMeta[] = [
         new PropertyMeta('id', 'Id', "The id of this node", 'string', '', '', false, false, false, false, ''),
     ]),
     new ElementMeta('fhirXml', 'FhirXmlDataFormat', 'FHIR XML', "Marshall and unmarshall FHIR objects to/from XML.", 'dataformat,transformation,hl7,xml', [
-        new PropertyMeta('fhirVersion', 'Fhir Version', "The version of FHIR to use. Possible values are: DSTU2,DSTU2_HL7ORG,DSTU2_1,DSTU3,R4", 'string', 'DSTU2, DSTU2_HL7ORG, DSTU2_1, DSTU3, R4', 'DSTU3', false, false, false, false, ''),
+        new PropertyMeta('fhirVersion', 'Fhir Version', "The version of FHIR to use. Possible values are: DSTU2,DSTU2_HL7ORG,DSTU2_1,DSTU3,R4,R5", 'string', 'DSTU2, DSTU2_HL7ORG, DSTU2_1, DSTU3, R4, R5', 'R4', false, false, false, false, ''),
         new PropertyMeta('prettyPrint', 'Pretty Print', "Sets the pretty print flag, meaning that the parser will encode resources with human-readable spacing and newlines between elements instead of condensing output as much as possible.", 'boolean', '', 'false', false, false, false, false, ''),
         new PropertyMeta('serverBaseUrl', 'Server Base Url', "Sets the server's base URL used by this parser. If a value is set, resource references will be turned into relative references if they are provided as absolute URLs but have a base matching the given base.", 'string', '', '', false, false, false, false, 'advanced'),
         new PropertyMeta('omitResourceId', 'Omit Resource Id', "If set to true (default is false) the ID of any resources being encoded will not be included in the output. Note that this does not apply to contained resources, only to root resources. In other words, if this is set to true, contained resources will still have local IDs but the outer/containing ID will not have an ID.", 'boolean', '', 'false', false, false, false, false, 'advanced'),
@@ -890,11 +890,13 @@ export const CamelModelMetadata: ElementMeta[] = [
     ]),
     new ElementMeta('route', 'RouteDefinition', 'Route', "A Camel route", 'configuration', [
         new PropertyMeta('group', 'Group', "The group that this route belongs to; could be the name of the RouteBuilder class or be explicitly configured in the XML. May be null.", 'string', '', '', false, false, false, false, ''),
+        new PropertyMeta('autoStartup', 'Auto Startup', "Whether to auto start this route", 'boolean', '', 'true', false, false, false, false, ''),
         new PropertyMeta('id', 'Id', "Sets the id of this node", 'string', '', '', false, false, false, false, ''),
         new PropertyMeta('description', 'Description', "Sets the description of this node", 'string', '', '', false, false, false, false, ''),
         new PropertyMeta('from', 'from', "from", 'FromDefinition', '', '', false, false, false, true, ''),
         new PropertyMeta('precondition', 'precondition', "precondition", 'string', '', '', false, false, false, false, ''),
         new PropertyMeta('routeConfigurationId', 'routeConfigurationId', "routeConfigurationId", 'string', '', '', false, false, false, false, ''),
+        new PropertyMeta('streamCaching', 'streamCaching', "streamCaching", 'boolean', '', '', false, false, false, false, ''),
     ]),
     new ElementMeta('faultToleranceConfiguration', 'FaultToleranceConfigurationDefinition', 'Fault Tolerance Configuration', "MicroProfile Fault Tolerance Circuit Breaker EIP configuration", 'configuration,eip', [
         new PropertyMeta('circuitBreaker', 'Circuit Breaker', "Refers to an existing io.smallrye.faulttolerance.core.circuit.breaker.CircuitBreaker instance to lookup and use from the registry. When using this, then any other circuit breaker options are not in use.", 'string', '', '', false, false, false, false, 'advanced'),
@@ -987,16 +989,9 @@ export const CamelModelMetadata: ElementMeta[] = [
         new PropertyMeta('description', 'Description', "Sets the description of this node", 'string', '', '', false, false, false, false, ''),
         new PropertyMeta('steps', 'steps', "steps", 'CamelElement', '', '', false, false, true, true, ''),
     ]),
-    new ElementMeta('kamelet', 'KameletDefinition', 'Kamelet', "To call Kamelets", 'eip,routing', [
+    new ElementMeta('kamelet', 'KameletDefinition', 'Kamelet', "To call Kamelets in special situations", 'eip,routing', [
         new PropertyMeta('name', 'Name', "Name of the Kamelet (templateId/routeId) to call. Options for the kamelet can be specified using uri syntax, eg mynamecount=4&type=gold.", 'string', '', '', true, false, false, false, ''),
         new PropertyMeta('parameters', 'parameters', "parameters", 'object', '', '', false, false, false, false, ''),
-        new PropertyMeta('steps', 'steps', "steps", 'CamelElement', '', '', false, false, true, true, ''),
-    ]),
-    new ElementMeta('doSwitch', 'SwitchDefinition', 'Do Switch', "Route messages based on a series of predicates (optimized during startup to select one predicate that will always be used)", 'eip,routing', [
-        new PropertyMeta('when', 'When', "Sets the when nodes", 'WhenDefinition', '', '', false, false, true, true, ''),
-        new PropertyMeta('otherwise', 'Otherwise', "Sets the otherwise node", 'OtherwiseDefinition', '', '', false, false, false, true, ''),
-        new PropertyMeta('id', 'Id', "Sets the id of this node", 'string', '', '', false, false, false, false, ''),
-        new PropertyMeta('description', 'Description', "Sets the description of this node", 'string', '', '', false, false, false, false, ''),
         new PropertyMeta('steps', 'steps', "steps", 'CamelElement', '', '', false, false, true, true, ''),
     ]),
     new ElementMeta('globalOption', 'GlobalOptionDefinition', 'Global Option', "Models a string key/value pair for configuring some global options on a Camel context such as max debug log length.", 'configuration', [
@@ -1272,6 +1267,7 @@ export const CamelModelMetadata: ElementMeta[] = [
     new ElementMeta('choice', 'ChoiceDefinition', 'Choice', "Route messages based on a series of predicates", 'eip,routing', [
         new PropertyMeta('when', 'When', "Sets the when nodes", 'WhenDefinition', '', '', false, false, true, true, ''),
         new PropertyMeta('otherwise', 'Otherwise', "Sets the otherwise node", 'OtherwiseDefinition', '', '', false, false, false, true, ''),
+        new PropertyMeta('precondition', 'Precondition', "Indicates whether this Choice EIP is in precondition mode or not. If so its branches (when/otherwise) are evaluated during startup to keep at runtime only the branch that matched.", 'boolean', '', 'false', false, false, false, false, 'advanced'),
         new PropertyMeta('id', 'Id', "Sets the id of this node", 'string', '', '', false, false, false, false, ''),
         new PropertyMeta('description', 'Description', "Sets the description of this node", 'string', '', '', false, false, false, false, ''),
         new PropertyMeta('steps', 'steps', "steps", 'CamelElement', '', '', false, false, true, true, ''),
@@ -1696,6 +1692,7 @@ export const CamelModelMetadata: ElementMeta[] = [
         new PropertyMeta('interceptSendToEndpoint', 'Intercept Send To Endpoint', "Applies a route for an interceptor if an exchange is send to the given endpoint", 'InterceptSendToEndpointDefinition', '', '', false, false, true, true, ''),
         new PropertyMeta('onException', 'On Exception', "Exception clause for catching certain exceptions and handling them.", 'OnExceptionDefinition', '', '', false, false, true, true, ''),
         new PropertyMeta('onCompletion', 'On Completion', "On completion callback for doing custom routing when the org.apache.camel.Exchange is complete.", 'OnCompletionDefinition', '', '', false, false, true, true, ''),
+        new PropertyMeta('precondition', 'Precondition', "The predicate of the precondition in simple language to evaluate in order to determine if this route configuration should be included or not.", 'string', '', '', false, false, false, false, 'advanced'),
         new PropertyMeta('id', 'Id', "Sets the id of this node", 'string', '', '', false, false, false, false, ''),
     ]),
     new ElementMeta('optimisticLockRetryPolicy', 'OptimisticLockRetryPolicyDefinition', 'Optimistic Lock Retry Policy', "To configure optimistic locking", 'configuration', [
@@ -1850,7 +1847,7 @@ export const CamelModelMetadata: ElementMeta[] = [
         new PropertyMeta('apiDocs', 'Api Docs', "Whether to include or exclude this rest operation in API documentation. This option will override what may be configured on a parent level. The default value is true.", 'boolean', '', 'true', false, false, false, false, 'advanced'),
         new PropertyMeta('tag', 'Tag', "To configure a special tag for the operations within this rest definition.", 'string', '', '', false, false, false, false, 'advanced'),
         new PropertyMeta('securityDefinitions', 'Security Definitions', "Sets the security definitions such as Basic, OAuth2 etc.", 'RestSecuritiesDefinition', '', '', false, false, false, true, 'security'),
-        new PropertyMeta('securityRequirements', 'Security Requirements', "Sets the security requirement(s) for all endpoints.", 'SecurityRequirementsDefinition', '', '', false, false, false, true, 'security'),
+        new PropertyMeta('securityRequirements', 'Security Requirements', "Sets the security requirement(s) for all endpoints.", 'SecurityDefinition', '', '', false, false, true, true, 'security'),
         new PropertyMeta('id', 'Id', "Sets the id of this node", 'string', '', '', false, false, false, false, ''),
         new PropertyMeta('description', 'Description', "Sets the description of this node", 'string', '', '', false, false, false, false, ''),
         new PropertyMeta('delete', 'delete', "delete", 'DeleteDefinition', '', '', false, false, true, true, ''),
@@ -1931,9 +1928,6 @@ export const CamelModelMetadata: ElementMeta[] = [
         new PropertyMeta('id', 'Id', "Sets the id of this node", 'string', '', '', false, false, false, false, ''),
         new PropertyMeta('description', 'Description', "Sets the description of this node", 'string', '', '', false, false, false, false, ''),
         new PropertyMeta('steps', 'steps', "steps", 'CamelElement', '', '', false, false, true, true, ''),
-    ]),
-    new ElementMeta('securityRequirements', 'SecurityRequirementsDefinition', 'Rest Security Requirements', "To configure global rest security requirements.", 'rest,security,configuration', [
-        new PropertyMeta('securityRequirement', 'securityRequirement', "securityRequirement", 'SecurityDefinition', '', '', false, false, false, true, ''),
     ]),
     new ElementMeta('outputType', 'OutputTypeDefinition', 'Output Type', "Set the expected data type of the output message. If the actual message type is different at runtime, camel look for a required Transformer and apply if exists. If validate attribute is true then camel applies Validator as well. Type name consists of two parts, 'scheme' and 'name' connected with ':'. For Java type 'name' is a fully qualified class name. For example {code java:java.lang.String} , {code json:ABCOrder} . It's also possible to specify only scheme part, so that it works like a wildcard. If only 'xml' is specified, all the XML message matches. It's handy to add only one transformer/validator for all the XML-Java transformation.", 'configuration', [
         new PropertyMeta('urn', 'Urn', "Set output type URN.", 'string', '', '', true, false, false, false, ''),

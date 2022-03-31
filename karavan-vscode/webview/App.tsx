@@ -16,11 +16,11 @@
  */
 import * as React from "react";
 import {
-  Page,
+  Page, PageSection, Spinner,
 } from "@patternfly/react-core";
-import {KaravanDesigner} from "./designer/KaravanDesigner";
+import { KaravanDesigner } from "./designer/KaravanDesigner";
 import vscode from "./vscode";
-import {KameletApi} from "karavan-core/lib/api/KameletApi";
+import { KameletApi } from "karavan-core/lib/api/KameletApi";
 import { ComponentApi } from "karavan-core/lib/api/ComponentApi";
 
 interface Props {
@@ -32,7 +32,10 @@ interface State {
   relativePath: string
   yaml: string
   key: string
-  backward: boolean
+  loaded: boolean
+  interval?: NodeJS.Timer
+  scheduledYaml: string
+  hasChanges: boolean
 }
 
 class App extends React.Component<Props, State> {
@@ -42,57 +45,72 @@ class App extends React.Component<Props, State> {
     relativePath: '',
     yaml: '',
     key: '',
-    backward: false
+    loaded: false,
+    scheduledYaml: '',
+    hasChanges: false
   };
 
+  saveScheduledChanges = () => {
+    if (this.state.hasChanges){
+      this.save(this.state.relativePath, this.state.scheduledYaml, false);
+    }
+  };
 
   componentDidMount() {
-    window.addEventListener('message', event => {
-      const message = event.data; // The JSON data our extension sent
-      switch (message.command) {
-        case 'backward':
-          this.setState({backward: true});
-          break;
-        case 'kamelets':
-          KameletApi.saveKamelets(message.kamelets);
-          break;
-        case 'components':
-          ComponentApi.saveComponents(message.components);
-          break;  
-        case 'open':
-          console.log(event);
-          if (this.state.filename === '' && this.state.key === ''){
-            this.setState({filename: message.filename, yaml: message.yaml, relativePath: message.relativePath, key: Math.random().toString()});
-          }
-          break;
-      }
-    });
+    window.addEventListener('message', this.onMessage, false);
+    vscode.postMessage({ command: 'getData' });
+    this.setState({interval: setInterval(this.saveScheduledChanges, 3000)});
   }
 
-  save(filename: string, yaml: string) {
-    vscode.postMessage({
-      command: 'save',
-      filename: filename,
-      relativePath: this.state.relativePath,
-      yaml: yaml
-    })
+  componentWillUnmount() {
+    if (this.state.interval) clearInterval(this.state.interval);
+    window.removeEventListener('message', this.onMessage, false);
+  }
+
+  onMessage = (event) => {
+    const message = event.data;
+    switch (message.command) {
+      case 'kamelets':
+        KameletApi.saveKamelets(message.kamelets);
+        break;
+      case 'components':
+        ComponentApi.saveComponents(message.components);
+        break;
+      case 'open':
+        if (this.state.filename === '' && this.state.key === '') {
+          this.setState({ filename: message.filename, yaml: message.yaml, scheduledYaml: message.yaml, relativePath: message.relativePath, key: Math.random().toString(), loaded: true });
+        }
+        break;
+    }
+  };
+
+  save(filename: string, yaml: string, propertyOnly: boolean) {
+    if (!propertyOnly) {
+      vscode.postMessage({ command: 'save', filename: filename, relativePath: this.state.relativePath, yaml: yaml });
+      this.setState({scheduledYaml: yaml, hasChanges: false});
+    } else {
+      this.setState({scheduledYaml: yaml, hasChanges: true});
+    }
   }
 
   public render() {
     return (
       <Page className="karavan">
-         <KaravanDesigner 
-          key={this.state.key} 
-          backward={this.state.backward}
-          filename={this.state.filename} 
-          yaml={this.state.yaml} 
-          onSave={(filename, yaml) => this.save(filename, yaml)}
-          borderColor="rgb(239, 166, 79)"
-          borderColorSelected="rgb(171, 172, 224)"
-          dark={this.props.dark}
-         />
+        {!this.state.loaded &&
+          <PageSection variant={this.props.dark ? "dark" : "light"} className="loading-page">
+            <Spinner  className="progress-stepper" isSVG diameter="80px" aria-label="Loading..."/>
+          </PageSection>
+        }
+        {this.state.loaded &&
+          <KaravanDesigner
+            key={this.state.key}
+            filename={this.state.filename}
+            yaml={this.state.yaml}
+            onSave={(filename, yaml, propertyOnly) => this.save(filename, yaml, propertyOnly)}
+            dark={this.props.dark} />
+        }
       </Page>
-    );
+    )
   }
 }
 

@@ -16,6 +16,13 @@
  */
 import React from 'react';
 import {
+    Drawer,
+    DrawerPanelContent,
+    DrawerContent,
+    DrawerContentBody,
+    DrawerHead,
+    DrawerActions,
+    DrawerCloseButton,
     Button, Modal,
     PageSection
 } from '@patternfly/react-core';
@@ -33,12 +40,11 @@ import PlusIcon from "@patternfly/react-icons/dist/esm/icons/plus-icon";
 import {DslElement} from "./DslElement";
 import {EventBus} from "../utils/EventBus";
 import {CamelUi, RouteToCreate} from "../utils/CamelUi";
+import {findDOMNode} from "react-dom";
 
 interface Props {
-    onSave?: (integration: Integration) => void
+    onSave?: (integration: Integration, propertyOnly: boolean) => void
     integration: Integration
-    borderColor: string
-    borderColorSelected: string
     dark: boolean
 }
 
@@ -55,6 +61,10 @@ interface State {
     width: number
     height: number
     top: number
+    left: number
+    clipboardStep?: CamelElement
+    ref?: any
+    propertyOnly: boolean
 }
 
 export class RouteDesigner extends React.Component<Props, State> {
@@ -70,24 +80,42 @@ export class RouteDesigner extends React.Component<Props, State> {
         width: 1000,
         height: 1000,
         top: 0,
+        left: 0,
+        ref: React.createRef(),
+        propertyOnly: false
     };
 
     componentDidMount() {
         window.addEventListener('resize', this.handleResize);
+        const element = findDOMNode(this.state.ref.current)?.parentElement?.parentElement;
+        const checkResize = (mutations: any) => {
+            const el = mutations[0].target;
+            const w = el.clientWidth;
+            const isChange = mutations.map((m: any) => `${m.oldValue}`).some((prev: any) => prev.indexOf(`width: ${w}px`) === -1);
+            if (isChange) this.setState({key: Math.random().toString()});
+        }
+        if (element) {
+            const observer = new MutationObserver(checkResize);
+            observer.observe(element, {attributes: true, attributeOldValue: true, attributeFilter: ['style']});
+        }
     }
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.handleResize);
     }
 
-    handleResize = () => {
+    handleResize = (event: any) => {
         this.setState({key: Math.random().toString()});
     }
 
     componentDidUpdate = (prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any) => {
         if (prevState.key !== this.state.key) {
-            this.props.onSave?.call(this, this.state.integration);
+            this.props.onSave?.call(this, this.state.integration, this.state.propertyOnly);
         }
+    }
+
+    saveToClipboard = (step?: CamelElement): void => {
+        this.setState({clipboardStep: step, key: Math.random().toString()});
     }
 
     unselectElement = (evt: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -109,12 +137,13 @@ export class RouteDesigner extends React.Component<Props, State> {
                 key: Math.random().toString(),
                 showSelector: false,
                 selectedStep: element,
-                selectedUuid: element.uuid
+                selectedUuid: element.uuid,
+                propertyOnly: false
             });
         } else {
             const clone = CamelUtil.cloneIntegration(this.state.integration);
             const i = CamelDefinitionApiExt.updateIntegrationRouteElement(clone, element);
-            this.setState({integration: i, key: Math.random().toString()});
+            this.setState({integration: i, propertyOnly: true, key: Math.random().toString()});
         }
     }
 
@@ -131,7 +160,8 @@ export class RouteDesigner extends React.Component<Props, State> {
             showDeleteConfirmation: false,
             key: Math.random().toString(),
             selectedStep: undefined,
-            selectedUuid: ''
+            selectedUuid: '',
+            propertyOnly: false
         });
         const el = new CamelElement("");
         el.uuid = id;
@@ -183,16 +213,17 @@ export class RouteDesigner extends React.Component<Props, State> {
             key: Math.random().toString(),
             showSelector: false,
             selectedStep: step,
-            selectedUuid: step.uuid
+            selectedUuid: step.uuid,
+            propertyOnly: false
         });
     }
 
     onIntegrationUpdate = (i: Integration) => {
-        this.setState({integration: i, showSelector: false, key: Math.random().toString()});
+        this.setState({integration: i, propertyOnly: false, showSelector: false, key: Math.random().toString()});
     }
 
     moveElement = (source: string, target: string) => {
-        const i = CamelDefinitionApiExt.moveElement(this.state.integration, source, target);
+        const i = CamelDefinitionApiExt.moveRouteElement(this.state.integration, source, target);
         const clone = CamelUtil.cloneIntegration(i);
         const selectedStep = CamelDefinitionApiExt.findElementInIntegration(clone, source);
         this.setState({
@@ -200,14 +231,15 @@ export class RouteDesigner extends React.Component<Props, State> {
             key: Math.random().toString(),
             showSelector: false,
             selectedStep: selectedStep,
-            selectedUuid: source
+            selectedUuid: source,
+            propertyOnly: false
         });
     }
 
     onResizePage(el: HTMLDivElement | null) {
         const rect = el?.getBoundingClientRect();
-        if (el && rect && (rect?.width !== this.state.width || rect.height !== this.state.height || rect.top !== this.state.top)) {
-            this.setState({width: rect.width, height: rect.height, top: rect.top});
+        if (el && rect && (el.scrollWidth !== this.state.width || el.scrollHeight !== this.state.height || rect.top !== this.state.top || rect.left !== this.state.left)) {
+            this.setState({width: el.scrollWidth, height: el.scrollHeight, top: rect.top, left: rect.left})
         }
     }
 
@@ -251,7 +283,7 @@ export class RouteDesigner extends React.Component<Props, State> {
         const routes = CamelUi.getRoutes(this.state.integration);
         return (
             <div className="graph">
-                <DslConnections height={this.state.height} width={this.state.width} top={this.state.top} integration={this.state.integration}/>
+                <DslConnections height={this.state.height} width={this.state.width} top={this.state.top} left={this.state.left} integration={this.state.integration}/>
                 <div className="flows" data-click="FLOWS" onClick={event => this.unselectElement(event)}
                      ref={el => this.onResizePage(el)}>
                     {routes?.map((route: any, index: number) => (
@@ -261,8 +293,6 @@ export class RouteDesigner extends React.Component<Props, State> {
                                     selectElement={this.selectElement}
                                     moveElement={this.moveElement}
                                     selectedUuid={this.state.selectedUuid}
-                                    borderColor={this.props.borderColor}
-                                    borderColorSelected={this.props.borderColorSelected}
                                     inSteps={false}
                                     position={index}
                                     step={route}
@@ -280,17 +310,31 @@ export class RouteDesigner extends React.Component<Props, State> {
             </div>)
     }
 
+    getPropertiesPanel() {
+        return (
+            <DrawerPanelContent isResizable hasNoBorder defaultSize={'400px'} maxSize={'800px'} minSize={'300px'}>
+                <DslProperties ref={this.state.ref}
+                               integration={this.state.integration}
+                               step={this.state.selectedStep}
+                               onIntegrationUpdate={this.onIntegrationUpdate}
+                               onPropertyUpdate={this.onPropertyUpdate}
+                               clipboardStep={this.state.clipboardStep}
+                               isRouteDesigner={true}
+                               onSaveClipboardStep={this.saveToClipboard}
+                />
+            </DrawerPanelContent>
+        )
+    }
+
     render() {
         return (
             <PageSection className="dsl-page" isFilled padding={{default: 'noPadding'}}>
                 <div className="dsl-page-columns">
-                    {this.getGraph()}
-                    <DslProperties
-                        integration={this.state.integration}
-                        step={this.state.selectedStep}
-                        onIntegrationUpdate={this.onIntegrationUpdate}
-                        onPropertyUpdate={this.onPropertyUpdate}
-                    />
+                    <Drawer isExpanded isInline>
+                        <DrawerContent panelContent={this.getPropertiesPanel()}>
+                            <DrawerContentBody>{this.getGraph()}</DrawerContentBody>
+                        </DrawerContent>
+                    </Drawer>
                 </div>
                 {this.getSelectorModal()}
                 {this.getDeleteConfirmation()}
