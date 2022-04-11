@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 import {KameletApi} from "karavan-core/lib/api/KameletApi";
-import {KameletModel, Property} from "karavan-core/lib/model/KameletModels";
+import {KameletModel} from "karavan-core/lib/model/KameletModels";
 import {DslMetaModel} from "./DslMetaModel";
 import {ComponentApi} from "karavan-core/lib/api/ComponentApi";
-import {ComponentProperty} from "karavan-core/lib/model/ComponentModels";
 import {CamelMetadataApi} from "karavan-core/lib/model/CamelMetadata";
 import {CamelUtil} from "karavan-core/lib/api/CamelUtil";
 import {CamelDefinitionApiExt} from "karavan-core/lib/api/CamelDefinitionApiExt";
-import {KameletDefinition, NamedBeanDefinition, RouteDefinition, SagaDefinition, ToDefinition} from "karavan-core/lib/model/CamelDefinition";
+import {NamedBeanDefinition, RouteDefinition, SagaDefinition, ToDefinition} from "karavan-core/lib/model/CamelDefinition";
 import {CamelElement, Dependency, Integration} from "karavan-core/lib/model/IntegrationDefinition";
+import {Trait} from "karavan-core/src/core/model/TraitDefinition";
 
 const StepElements: string[] = [
     "AggregateDefinition",
@@ -132,7 +132,7 @@ export class CamelUi {
 
     static getDslMetaModel = (className: string): DslMetaModel => {
         const el = CamelMetadataApi.getCamelModelMetadataByClassName(className);
-        return  new DslMetaModel({dsl: className, title: el?.title, description: el?.description, labels: el?.labels, navigation: el?.labels, type: "DSL"})
+        return  new DslMetaModel({dsl: className, name: el?.name, title: el?.title, description: el?.description, labels: el?.labels, navigation: el?.labels, type: "DSL"})
     }
 
     static getComponentsDslMetaModel = (type: 'consumer' | "producer"): DslMetaModel[] => {
@@ -183,35 +183,8 @@ export class CamelUi {
             : name;
     }
 
-    static isKameletComponent = (element: CamelElement | undefined): boolean => {
-        if (element?.dslName === 'KameletDefinition') {
-            return true;
-        } else if (element && ["FromDefinition", "ToDefinition"].includes(element.dslName)) {
-            const uri: string = (element as any).uri;
-            return uri !== undefined && uri.startsWith("kamelet:");
-        } else {
-            return false;
-        }
-    }
-
-    static getKamelet = (element: CamelElement): KameletModel | undefined => {
-        if (element.dslName === 'KameletDefinition') {
-            return KameletApi.findKameletByName((element as KameletDefinition).name || '');
-        } else if (element.dslName === 'ToDefinition' && (element as ToDefinition).uri?.startsWith("kamelet:")) {
-            const kameletName = (element as ToDefinition).uri?.replace("kamelet:", "");
-            return KameletApi.findKameletByName(kameletName);
-        } else if (["FromDefinition", "FromDefinition", "ToDefinition"].includes(element.dslName)) {
-            const uri: string = (element as any).uri;
-            const k =
-                uri !== undefined ? KameletApi.findKameletByUri(uri) : undefined;
-            return k;
-        } else {
-            return undefined;
-        }
-    }
-
     static isActionKamelet = (element: CamelElement): boolean => {
-        const kamelet = this.getKamelet(element);
+        const kamelet = CamelUtil.getKamelet(element);
         if (kamelet) return kamelet.type() === 'action'
         else return false;
     }
@@ -251,30 +224,6 @@ export class CamelUi {
         return result;
     }
 
-    static getKameletProperties = (element: any): Property[] => {
-        const kamelet = CamelUi.getKamelet(element)
-        return kamelet
-            ? KameletApi.getKameletProperties(kamelet?.metadata.name)
-            : [];
-    }
-
-    static getComponentProperties = (element: any): ComponentProperty[] => {
-        const dslName: string = (element as any).dslName;
-       if (dslName === 'ToDynamicDefinition'){
-           const component = ComponentApi.findByName(dslName);
-           return component ? ComponentApi.getComponentProperties(component?.component.name,'producer') : [];
-       } else {
-           const uri: string = (element as any).uri;
-           const name = ComponentApi.getComponentNameFromUri(uri);
-           if (name){
-               const component = ComponentApi.findByName(name);
-               return component ? ComponentApi.getComponentProperties(component?.component.name, element.dslName === 'FromDefinition' ? 'consumer' : 'producer') : [];
-           } else {
-               return [];
-           }
-       }
-    }
-
     static getElementTitle = (element: CamelElement): string => {
         if (element.dslName === 'RouteDefinition') {
             const routeId = (element as RouteDefinition).id
@@ -290,7 +239,7 @@ export class CamelUi {
     }
 
     static getTitle = (element: CamelElement): string => {
-        const k: KameletModel | undefined = CamelUi.getKamelet(element);
+        const k: KameletModel | undefined = CamelUtil.getKamelet(element);
         if (k) {
             return k.title();
         } else if (element.dslName === 'RouteDefinition') {
@@ -306,7 +255,7 @@ export class CamelUi {
     }
 
     static getOutgoingTitle = (element: CamelElement): string => {
-        const k: KameletModel | undefined = CamelUi.getKamelet(element);
+        const k: KameletModel | undefined = CamelUtil.getKamelet(element);
         if (k) {
             return k.title();
         } else if (element.dslName === 'RouteDefinition') {
@@ -330,7 +279,10 @@ export class CamelUi {
 
     static isShowUriTooltip = (element: CamelElement): boolean => {
         const uri: string = (element as any).uri;
-        return uri !== undefined && !uri.startsWith("kamelet");
+        if (uri !== undefined && !uri.startsWith("kamelet")){
+            return ComponentApi.getComponentNameFromUri(uri) !== uri;
+        }
+        return false;
     }
 
     static getExpressionTooltip = (element: CamelElement): string => {
@@ -440,7 +392,7 @@ export class CamelUi {
     }
 
     static getIcon = (element: CamelElement): string => {
-        const k: KameletModel | undefined = CamelUi.getKamelet(element);
+        const k: KameletModel | undefined = CamelUtil.getKamelet(element);
         if (["FromDefinition", "KameletDefinition"].includes(element.dslName)) {
             return k ? k.icon() : CamelUi.getIconForName(element.dslName);
         } else if (element.dslName === "ToDefinition" && (element as ToDefinition).uri?.startsWith("kamelet:")) {
@@ -451,7 +403,7 @@ export class CamelUi {
     }
 
     static getConnectionIcon = (element: CamelElement): string => {
-        const k: KameletModel | undefined = CamelUi.getKamelet(element);
+        const k: KameletModel | undefined = CamelUtil.getKamelet(element);
         if (["FromDefinition", "KameletDefinition"].includes(element.dslName)) {
             return k ? k.icon() : externalIcon;
         } else if (element.dslName === "ToDefinition" && (element as ToDefinition).uri?.startsWith("kamelet:")) {
@@ -465,6 +417,7 @@ export class CamelUi {
         const result = new Map<string, number>();
         result.set('routes', i.spec.flows?.filter((e: any) => e.dslName === 'RouteDefinition').length || 0);
         result.set('rest', i.spec.flows?.filter((e: any) => e.dslName === 'RestDefinition').length || 0);
+        result.set('traits', this.getTraitCounts(i.spec.traits));
         const beans = i.spec.flows?.filter((e: any) => e.dslName === 'Beans');
         if (beans && beans.length > 0 && beans[0].beans && beans[0].beans.length > 0){
             result.set('beans', Array.from(beans[0].beans).length);
@@ -473,6 +426,11 @@ export class CamelUi {
             result.set('dependencies', i.spec.dependencies.length);
         }
         return result;
+    }
+
+    static getTraitCounts = (t?: Trait): number => {
+        if (t) return Object.getOwnPropertyNames(t).filter(name => name !== 'dslName' && name !== "uuid" && (t as any)[name]).length;
+        return 0;
     }
 
     static getRoutes = (integration: Integration): CamelElement[] => {

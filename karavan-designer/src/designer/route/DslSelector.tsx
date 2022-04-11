@@ -27,11 +27,13 @@ import {DslMetaModel} from "../utils/DslMetaModel";
 import {CamelUtil} from "karavan-core/lib/api/CamelUtil";
 
 interface Props {
-    onDslSelect: any
-    parentId: string
+    onDslSelect: (dsl: DslMetaModel, parentId: string, position?: number | undefined) => void,
+    parentId: string,
     parentDsl?: string,
     showSteps: boolean,
-    dark: boolean
+    dark: boolean,
+    position?: number
+    tabIndex?: string | number
 }
 
 interface State {
@@ -42,7 +44,7 @@ interface State {
 export class DslSelector extends React.Component<Props, State> {
 
     public state: State = {
-        tabIndex: CamelUi.getSelectorModelTypes(this.props.parentDsl, this.props.showSteps)[0][0],
+        tabIndex: this.props.tabIndex ? this.props.tabIndex : CamelUi.getSelectorModelTypes(this.props.parentDsl, this.props.showSteps)[0][0],
     };
 
 
@@ -58,7 +60,7 @@ export class DslSelector extends React.Component<Props, State> {
 
     selectDsl = (evt: React.MouseEvent, dsl: any) => {
         evt.stopPropagation()
-        this.props.onDslSelect.call(this, dsl, this.props.parentId);
+        this.props.onDslSelect.call(this, dsl, this.props.parentId, this.props.position);
     }
 
     checkFilter = (dsl: DslMetaModel): boolean => {
@@ -97,7 +99,7 @@ export class DslSelector extends React.Component<Props, State> {
 
     getCard(dsl: DslMetaModel, index: number) {
         return (
-            <Card key={dsl.dsl + index} isHoverable isCompact className="dsl-card"
+            <Card data-tour={dsl.name} key={dsl.dsl + index} isHoverable isCompact className="dsl-card"
                   onClick={event => this.selectDsl(event, dsl)}>
                 <CardHeader>
                     <img draggable={false}
@@ -130,7 +132,7 @@ export class DslSelector extends React.Component<Props, State> {
         return (
             <PageSection variant={this.props.dark ? "darker" : "light"}>
                 {this.searchInput()}
-                <Tabs style={{overflow: 'hidden'}} activeKey={this.state.tabIndex} onSelect={this.selectTab}>
+                <Tabs data-tour="selector-tabs" style={{overflow: 'hidden'}} activeKey={this.state.tabIndex} onSelect={this.selectTab}>
                     {CamelUi.getSelectorModelTypes(parentDsl, this.props.showSteps).map((label: [string, number], index: number) => {
                         const labelText = label[0];
                         const count = label[1];
